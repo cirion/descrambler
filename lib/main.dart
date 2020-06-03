@@ -89,6 +89,7 @@ class RandomWordsState extends State<RandomWords> {
 
   Widget _buildSuggestions() {
     return ListView.builder(
+      padding: const EdgeInsets.all(0),
       itemCount: _suggestions.length,
       //padding: const EdgeInsets.all(16.0),
       itemBuilder: /* 1 */ (context, i) {
@@ -112,6 +113,8 @@ class RandomWordsState extends State<RandomWords> {
 
   Widget _buildRow(String text) {
     return ListTile(
+      dense: true,
+      contentPadding: const EdgeInsets.all(0),
       title: Text(
         text,
         style: _biggerFont,
