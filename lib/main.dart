@@ -6,8 +6,11 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:dart_random_choice/dart_random_choice.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:english_words/english_words.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 void main() => runApp(MyApp());
@@ -16,10 +19,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     print("Building app.");
-    return MaterialApp(
-      title: 'Startup Name Generator',
-      home: RandomWords()
-    );
+    return MaterialApp(title: 'Startup Name Generator', home: RandomWords());
   }
 }
 
@@ -27,7 +27,8 @@ class RandomWordsState extends State<RandomWords> {
   //final _suggestions = <WordPair>[];
   List<String> _suggestions = new List<String>();
   //final _biggerFont = const TextStyle(fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
-  final _biggerFont = GoogleFonts.robotoMono(fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
+  final _biggerFont = GoogleFonts.robotoMono(
+      fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
   final _secretWord = randomChoice(nouns);
   double glyphHeight;
   double glyphWidth;
@@ -63,10 +64,21 @@ class RandomWordsState extends State<RandomWords> {
     _getPositions();
     final int rowCount = (_getWindowHeight() ~/ glyphHeight) - 1;
     print("Got $rowCount rows");
-    setState(() {
-      _suggestions = nouns.toList().take(rowCount).toList();
-      columnCount = _getWindowWidth() ~/ glyphWidth;
-    });
+    if (_suggestions == null || _suggestions.length == 0) {
+      setState(() {
+        _suggestions = nouns.toList().take(rowCount).toList();
+        columnCount = _getWindowWidth() ~/ glyphWidth;
+      });
+    }
+  }
+
+  Size _textSize(String text, TextStyle style) {
+    final TextPainter textPainter = TextPainter(
+        text: TextSpan(text: text, style: style),
+        maxLines: 1,
+        textDirection: TextDirection.ltr)
+      ..layout(minWidth: 0, maxWidth: double.infinity);
+    return textPainter.size;
   }
 
   @override
@@ -77,7 +89,8 @@ class RandomWordsState extends State<RandomWords> {
     TextPainter tp = new TextPainter(
       textAlign: TextAlign.center,
       text: span,
-      textHeightBehavior: TextHeightBehavior(applyHeightToFirstAscent: false, applyHeightToLastDescent: false),
+      textHeightBehavior: TextHeightBehavior(
+          applyHeightToFirstAscent: false, applyHeightToLastDescent: false),
       textDirection: TextDirection.ltr,
     );
     tp.layout();
@@ -91,6 +104,12 @@ class RandomWordsState extends State<RandomWords> {
 
   @override
   Widget build(BuildContext context) {
+    final Size txtSize = _textSize("M", _biggerFont);
+    final width = txtSize.width;
+    final height = txtSize.height;
+
+    print("txtSize in build is $width x $height");
+
     return Scaffold(
       /*
       appBar: AppBar(
@@ -104,11 +123,11 @@ class RandomWordsState extends State<RandomWords> {
   Widget _buildSuggestions() {
     return ListView.builder(
         key: _keyRed,
-      padding: const EdgeInsets.all(0),
-      itemCount: _suggestions.length,
-      //padding: const EdgeInsets.all(16.0),
-      itemBuilder: /* 1 */ (context, i) {
-        /*
+        padding: const EdgeInsets.all(0),
+        itemCount: _suggestions.length,
+        //padding: const EdgeInsets.all(16.0),
+        itemBuilder: /* 1 */ (context, i) {
+          /*
         if (i.isOdd) return Divider(); /* 2 */
 
         final index = i ~/ 2; /* 3 */
@@ -117,13 +136,12 @@ class RandomWordsState extends State<RandomWords> {
         }
 
          */
-        if (_suggestions != null) {
-          return _buildRow(_suggestions[i]);
-        } else {
-          return Text("Loading...");
-        }
-      }
-    );
+          if (_suggestions != null) {
+            return _buildRow(_suggestions[i]);
+          } else {
+            return Text("Loading...");
+          }
+        });
   }
 
   Widget _buildRow(String text) {
@@ -131,13 +149,36 @@ class RandomWordsState extends State<RandomWords> {
       final list = new List<Text>(columnCount);
       int i;
       for (i = 0; i < text.length; ++i) {
-        list[i] = Text(text.substring(i, i + 1),
-          style: _biggerFont,);
+        list[i] = Text(
+          text.substring(i, i + 1),
+          style: _biggerFont,
+          softWrap: false,
+          overflow: TextOverflow.clip,
+          maxLines: 1,
+        );
       }
-      for (; i < columnCount; ++i) {
-        list[i] = Text("Z", style: _biggerFont,);
+      for (; i < columnCount - 1; ++i) {
+        list[i] = Text(
+          "Z",
+          style: _biggerFont,
+          softWrap: false,
+          overflow: TextOverflow.clip,
+          maxLines: 1,
+        );
       }
+      list[columnCount - 1] = Text(
+        "E",
+        style: _biggerFont,
+        softWrap: false,
+        overflow: TextOverflow.clip,
+        maxLines: 1,
+      );
       return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisSize: MainAxisSize.max,
+        textBaseline: TextBaseline.ideographic,
+        textDirection: TextDirection.ltr,
+
         children: list,
       );
     } else {
@@ -159,4 +200,3 @@ class RandomWords extends StatefulWidget {
   @override
   RandomWordsState createState() => RandomWordsState();
 }
-
