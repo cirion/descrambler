@@ -8,6 +8,7 @@ import 'dart:ui';
 import 'package:dart_random_choice/dart_random_choice.dart';
 import 'package:flutter/material.dart';
 import 'package:english_words/english_words.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() => runApp(MyApp());
 
@@ -25,9 +26,12 @@ class MyApp extends StatelessWidget {
 class RandomWordsState extends State<RandomWords> {
   //final _suggestions = <WordPair>[];
   List<String> _suggestions = new List<String>();
-  final _biggerFont = const TextStyle(fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
+  //final _biggerFont = const TextStyle(fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
+  final _biggerFont = GoogleFonts.robotoMono(fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
   final _secretWord = randomChoice(nouns);
   double glyphHeight;
+  double glyphWidth;
+  int columnCount;
 
   //creating Key for red panel
   GlobalKey _keyRed = GlobalKey();
@@ -49,13 +53,19 @@ class RandomWordsState extends State<RandomWords> {
     return renderBoxRed.size.height;
   }
 
+  _getWindowWidth() {
+    final RenderBox renderBoxRed = _keyRed.currentContext.findRenderObject();
+    return renderBoxRed.size.width;
+  }
+
   _afterLayout(_) {
     _getSizes();
     _getPositions();
-    final int rowCount = _getWindowHeight() ~/ glyphHeight;
+    final int rowCount = (_getWindowHeight() ~/ glyphHeight) - 1;
     print("Got $rowCount rows");
     setState(() {
       _suggestions = nouns.toList().take(rowCount).toList();
+      columnCount = _getWindowWidth() ~/ glyphWidth;
     });
   }
 
@@ -65,30 +75,35 @@ class RandomWordsState extends State<RandomWords> {
     print("initState");
     TextSpan span = new TextSpan(style: _biggerFont, text: "M");
     TextPainter tp = new TextPainter(
+      textAlign: TextAlign.center,
       text: span,
-      textDirection: TextDirection.ltr
+      textHeightBehavior: TextHeightBehavior(applyHeightToFirstAscent: false, applyHeightToLastDescent: false),
+      textDirection: TextDirection.ltr,
     );
     tp.layout();
     WidgetsBinding.instance.addPostFrameCallback(_afterLayout);
     final width = tp.width;
     final height = tp.height;
     glyphHeight = tp.height;
+    glyphWidth = tp.width;
     print("GLYPH dimensions are $width x $height");
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _keyRed,
+      /*
       appBar: AppBar(
         title: Text('Startup Name Generator'),
       ),
+       */
       body: _buildSuggestions(),
     );
   }
 
   Widget _buildSuggestions() {
     return ListView.builder(
+        key: _keyRed,
       padding: const EdgeInsets.all(0),
       itemCount: _suggestions.length,
       //padding: const EdgeInsets.all(16.0),
@@ -112,6 +127,23 @@ class RandomWordsState extends State<RandomWords> {
   }
 
   Widget _buildRow(String text) {
+    if (text != null) {
+      final list = new List<Text>(columnCount);
+      int i;
+      for (i = 0; i < text.length; ++i) {
+        list[i] = Text(text.substring(i, i + 1),
+          style: _biggerFont,);
+      }
+      for (; i < columnCount; ++i) {
+        list[i] = Text("Z", style: _biggerFont,);
+      }
+      return Row(
+        children: list,
+      );
+    } else {
+      return Text("Loading...");
+    }
+    /*
     return ListTile(
       dense: true,
       contentPadding: const EdgeInsets.all(0),
@@ -119,7 +151,7 @@ class RandomWordsState extends State<RandomWords> {
         text,
         style: _biggerFont,
       ),
-    );
+    );*/
   }
 }
 
