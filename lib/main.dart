@@ -25,10 +25,14 @@ class RandomWordsState extends State<RandomWords> {
   List<String> _suggestions = new List<String>();
   final _monoFont = GoogleFonts.robotoMono(
       fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
-  final _secretWord = randomChoice(nouns);
+  String _secretWord;
+  int _secretWordX;
+  int _secretWordY;
   int _columnCount;
   double _appBarHeight;
   GlobalKey _globalKey = GlobalKey();
+
+  List<List<String>> _characters = new List<List<String>>();
 
   _getWindowHeight() {
     final RenderBox renderBoxRed = _globalKey.currentContext.findRenderObject();
@@ -51,17 +55,33 @@ class RandomWordsState extends State<RandomWords> {
 
       final int rowCount = (_getWindowHeight() ~/ glyphHeight) - 1;
       print("Got $rowCount rows");
-      final shuffled = nouns.toList();
-      shuffled.shuffle(Random());
+
+      _columnCount = _getWindowWidth() ~/ glyphWidth;
+
+      _secretWord = randomChoice(nouns);
+      final secretWordLength = _secretWord.length;
+
+      _characters = new List(rowCount);
+      for (int i = 0; i < rowCount; ++i) {
+        _characters[i] = new List(_columnCount);
+        for (int j = 0; j < _columnCount; ++j) {
+          _characters[i][j] = randomAlpha(2).substring(0, 1);
+        }
+      }
+
       if (_suggestions == null || _suggestions.length == 0) {
         setState(() {
-          _suggestions = shuffled.take(rowCount).toList();
-          _columnCount = _getWindowWidth() ~/ glyphWidth;
+          _secretWordX = Random().nextInt(_columnCount - secretWordLength);
+          _secretWordY = Random().nextInt(rowCount);
         });
         Timer.periodic(const Duration(seconds: 1), (timer) {
           print("Tick.");
+          for (int i = 0; i < rowCount; ++i) {
+            for (int j = 0; j < _columnCount; ++j) {
+              _characters[i][j] = randomAlpha(2).substring(0, 1);
+            }
+          }
           setState(() {
-
           });
         });
       }
@@ -110,12 +130,13 @@ class RandomWordsState extends State<RandomWords> {
   }
 
   Widget _buildSuggestions() {
-    if (_suggestions == null || _columnCount == null) {
+    if (_columnCount == null) {
       return Text("Loading...");
     }
-    final rows = new List<Widget>(_suggestions.length);
-    for (int i = 0; i < _suggestions.length; ++i) {
-      rows[i] = _buildRow(_suggestions[i]);
+    final rowCount = _characters.length;
+    final rows = new List<Widget>(rowCount);
+    for (int i = 0; i < rowCount; ++i) {
+      rows[i] = _buildRow(i);
     }
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
@@ -128,49 +149,24 @@ class RandomWordsState extends State<RandomWords> {
     );
   }
 
-  Widget _buildRow(String text) {
-    if (text != null) {
-      final list = new List<Text>(_columnCount);
-      int i;
-      for (i = 0; i < text.length; ++i) {
-        list[i] = Text(
-          text.substring(i, i + 1),
+  Widget _buildRow(int index) {
+    final chars = new List<Widget>(_columnCount);
+    for (int i = 0; i < _columnCount; ++i) {
+        chars[i] = Text(
+          _characters[index][i],
           style: _monoFont,
           softWrap: false,
           overflow: TextOverflow.clip,
           maxLines: 1,
         );
       }
-      for (; i < _columnCount - 1; ++i) {
-        // randomAlpha always returns a capital if we request a single
-        // character, so request multiple and trim the result.
-        final rando = randomAlpha(2).substring(0, 1);
-        //print("Got rando $rando");
-        list[i] = Text(
-          rando,
-          style: _monoFont,
-          softWrap: false,
-          overflow: TextOverflow.clip,
-          maxLines: 1,
-        );
-      }
-      list[_columnCount - 1] = Text(
-        "E",
-        style: _monoFont,
-        softWrap: false,
-        overflow: TextOverflow.clip,
-        maxLines: 1,
-      );
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         mainAxisSize: MainAxisSize.max,
         textBaseline: TextBaseline.ideographic,
         textDirection: TextDirection.ltr,
-        children: list,
+        children: chars,
       );
-    } else {
-      return Text("Loading...");
-    }
   }
 }
 
