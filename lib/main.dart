@@ -24,86 +24,41 @@ class MyApp extends StatelessWidget {
 }
 
 class RandomWordsState extends State<RandomWords> {
-  //final _suggestions = <WordPair>[];
   List<String> _suggestions = new List<String>();
-  //final _biggerFont = const TextStyle(fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
-  final _biggerFont = GoogleFonts.robotoMono(
+  final _monoFont = GoogleFonts.robotoMono(
       fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
   final _secretWord = randomChoice(nouns);
-  double glyphHeight;
-  double glyphWidth;
   int columnCount;
   double appBarHeight;
 
-  //creating Key for red panel
-  GlobalKey _keyRed = GlobalKey();
-
-  _getSizes() {
-    final RenderBox renderBoxRed = _keyRed.currentContext.findRenderObject();
-    final sizeRed = renderBoxRed.size;
-    print("SIZE of Red: $sizeRed");
-  }
-
-  _getPositions() {
-    final RenderBox renderBoxRed = _keyRed.currentContext.findRenderObject();
-    final positionRed = renderBoxRed.localToGlobal(Offset.zero);
-    print("POSITION of Red: $positionRed ");
-  }
+  GlobalKey _globalKey = GlobalKey();
 
   _getWindowHeight() {
-    final RenderBox renderBoxRed = _keyRed.currentContext.findRenderObject();
+    final RenderBox renderBoxRed = _globalKey.currentContext.findRenderObject();
     return renderBoxRed.size.height - appBarHeight;
   }
 
   _getWindowWidth() {
-    final RenderBox renderBoxRed = _keyRed.currentContext.findRenderObject();
+    final RenderBox renderBoxRed = _globalKey.currentContext.findRenderObject();
     return renderBoxRed.size.width;
   }
 
   _afterLayout(_) {
     Future.delayed(const Duration(milliseconds: 1000), () {
 
-      final Size txtSize = _textSize("M", _biggerFont);
-      final width = txtSize.width;
-      final height = txtSize.height;
+      final Size txtSize = _textSize("M", _monoFont);
+      final glyphWidth = txtSize.width;
+      final glyphHeight = txtSize.height;
 
-      print("txtSize in build is $width x $height");
-
-
-      final constraints = BoxConstraints(
-        maxWidth: 800.0, // maxwidth calculated
-        minHeight: 0.0,
-        minWidth: 0.0,
-      );
-
-      RenderParagraph renderParagraph = RenderParagraph(
-        TextSpan(
-          text: "M",
-          style: _biggerFont,
-        ),
-        textDirection: TextDirection.ltr,
-        maxLines: 1,
-      );
-      renderParagraph.layout(constraints);
-      final size = renderParagraph.size;
-      final renderedParagraphHeight = size.height;
-      final minIntrHeight = renderParagraph.getMinIntrinsicHeight(double.infinity);
-      final maxIntrHeight = renderParagraph.getMaxIntrinsicHeight(double.infinity);
-
-      print("Height calculations (really hope 24) include $renderedParagraphHeight, $minIntrHeight, $maxIntrHeight");
-      glyphWidth = width;
-      glyphHeight = renderedParagraphHeight;
-
-      _getSizes();
-      _getPositions();
-
-
+      print("txtSize after layout is $glyphWidth x $glyphHeight");
 
       final int rowCount = (_getWindowHeight() ~/ glyphHeight) - 1;
       print("Got $rowCount rows");
+      final shuffled = nouns.toList();
+      shuffled.shuffle(Random());
       if (_suggestions == null || _suggestions.length == 0) {
         setState(() {
-          _suggestions = nouns.toList().take(rowCount).toList();
+          _suggestions = shuffled.take(rowCount).toList();
           columnCount = _getWindowWidth() ~/ glyphWidth;
         });
       }
@@ -131,27 +86,11 @@ class RandomWordsState extends State<RandomWords> {
   void initState() {
     super.initState();
     print("initState");
-    TextSpan span = new TextSpan(style: _biggerFont, text: "M");
-    TextPainter tp = new TextPainter(
-      textAlign: TextAlign.center,
-      text: span,
-      textHeightBehavior: TextHeightBehavior(
-          applyHeightToFirstAscent: false, applyHeightToLastDescent: false),
-      textDirection: TextDirection.ltr,
-    );
-    tp.layout();
-    final desiredHeight = tp.preferredLineHeight;
     WidgetsBinding.instance.addPostFrameCallback(_afterLayout);
-    final width = tp.width;
-    //glyphHeight = desiredHeight;
-    //glyphWidth = tp.width;
-    print("GLYPH dimensions are $width x $desiredHeight");
   }
 
   @override
   Widget build(BuildContext context) {
-
-
     final appBar = AppBar(
       title: Text('Startup Name Generator'),
     );
@@ -162,7 +101,7 @@ class RandomWordsState extends State<RandomWords> {
     return Scaffold(
       appBar: appBar,
       body: _buildSuggestions(),
-      key: _keyRed,
+      key: _globalKey,
     );
   }
 
@@ -183,28 +122,6 @@ class RandomWordsState extends State<RandomWords> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: rows,
     );
-    return ListView.builder(
-        key: _keyRed,
-
-        padding: const EdgeInsets.all(0),
-        itemCount: _suggestions.length,
-        //padding: const EdgeInsets.all(16.0),
-        itemBuilder: /* 1 */ (context, i) {
-          /*
-        if (i.isOdd) return Divider(); /* 2 */
-
-        final index = i ~/ 2; /* 3 */
-        if (index >= _suggestions.length) {
-          _suggestions.addAll(generateWordPairs().take(10)); /* 4 */
-        }
-
-         */
-          if (_suggestions != null) {
-            return _buildRow(_suggestions[i]);
-          } else {
-            return Text("Loading...");
-          }
-        });
   }
 
   Widget _buildRow(String text) {
@@ -214,7 +131,7 @@ class RandomWordsState extends State<RandomWords> {
       for (i = 0; i < text.length; ++i) {
         list[i] = Text(
           text.substring(i, i + 1),
-          style: _biggerFont,
+          style: _monoFont,
           softWrap: false,
           overflow: TextOverflow.clip,
           maxLines: 1,
@@ -223,7 +140,7 @@ class RandomWordsState extends State<RandomWords> {
       for (; i < columnCount - 1; ++i) {
         list[i] = Text(
           "Z",
-          style: _biggerFont,
+          style: _monoFont,
           softWrap: false,
           overflow: TextOverflow.clip,
           maxLines: 1,
@@ -231,7 +148,7 @@ class RandomWordsState extends State<RandomWords> {
       }
       list[columnCount - 1] = Text(
         "E",
-        style: _biggerFont,
+        style: _monoFont,
         softWrap: false,
         overflow: TextOverflow.clip,
         maxLines: 1,
@@ -247,15 +164,6 @@ class RandomWordsState extends State<RandomWords> {
     } else {
       return Text("Loading...");
     }
-    /*
-    return ListTile(
-      dense: true,
-      contentPadding: const EdgeInsets.all(0),
-      title: Text(
-        text,
-        style: _biggerFont,
-      ),
-    );*/
   }
 }
 
