@@ -34,6 +34,7 @@ class RandomWordsState extends State<RandomWords> {
   int _columnCount;
   double _appBarHeight;
   GlobalKey _globalKey = GlobalKey();
+  String _inputWord = "";
 
   List<List<String>> _characters = new List<List<String>>();
 
@@ -56,7 +57,7 @@ class RandomWordsState extends State<RandomWords> {
 
       print("txtSize after layout is $glyphWidth x $glyphHeight");
 
-      final int rowCount = (_getWindowHeight() ~/ glyphHeight);
+      final int rowCount = (_getWindowHeight() ~/ glyphHeight) - 1;
       print("Got $rowCount rows");
 
       _columnCount = _getWindowWidth() ~/ glyphWidth;
@@ -129,27 +130,60 @@ class RandomWordsState extends State<RandomWords> {
   Widget build(BuildContext context) {
     final appBar = AppBar(
       title: Text('Startup Name Generator'),
+      backgroundColor: Colors.lightGreen,
     );
     final appBarSize = appBar.preferredSize.height;
     _appBarHeight = appBarSize;
 
     final keyboard = Container(
       // Keyboard is transparent
-      color: Colors.red,
+      color: Colors.lightGreen,
       child: VirtualKeyboard(
         // [0-9] + .
           type: VirtualKeyboardType.Alphanumeric,
           // Callback for key press event
-          onKeyPress: (key) => print(key.text)),
+          onKeyPress: (key) => _onKeyPress),
     );
+
+    final input = Text(
+      _inputWord,
+      style: _monoFont,
+    );
+
     final children = Column(
-      children: <Widget>[_buildSuggestions(), keyboard],
+      children: <Widget>[_buildSuggestions(),
+        input,
+        keyboard],
     );
 
     return Scaffold(
       appBar: appBar,
       body: children,
     );
+  }
+
+  /// Fired when the virtual keyboard key is pressed.
+  _onKeyPress(VirtualKeyboardKey key) {
+    if (key.keyType == VirtualKeyboardKeyType.String) {
+      setState(() {
+        _inputWord = _inputWord + key.text.toLowerCase();
+      });
+    } else if (key.keyType == VirtualKeyboardKeyType.Action) {
+      switch (key.action) {
+        case VirtualKeyboardKeyAction.Backspace:
+          if (_inputWord.length == 0) return;
+          setState(() {
+            _inputWord = _inputWord.substring(0, _inputWord.length - 1);
+          });
+          break;
+        case VirtualKeyboardKeyAction.Return:
+          setState(() {
+            _inputWord = "";
+          });
+          break;
+        default:
+      }
+    }
   }
 
   Widget _buildSuggestions() {
