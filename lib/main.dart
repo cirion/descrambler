@@ -12,6 +12,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:random_string/random_string.dart';
+import 'package:virtual_keyboard/virtual_keyboard.dart';
 
 void main() => runApp(MyApp());
 
@@ -126,30 +127,49 @@ class RandomWordsState extends State<RandomWords> {
 
   @override
   Widget build(BuildContext context) {
-    final longerRando = randomAlpha(2);
     final appBar = AppBar(
       title: Text('Startup Name Generator'),
     );
     final appBarSize = appBar.preferredSize.height;
     _appBarHeight = appBarSize;
 
+    final keyboard = Container(
+      // Keyboard is transparent
+      color: Colors.red,
+      child: VirtualKeyboard(
+        // [0-9] + .
+          type: VirtualKeyboardType.Alphanumeric,
+          // Callback for key press event
+          onKeyPress: (key) => print(key.text)),
+    );
+    final children = Column(
+      children: <Widget>[_buildSuggestions(), keyboard],
+    );
+
     return Scaffold(
       appBar: appBar,
-      body: _buildSuggestions(),
-      key: _globalKey,
+      body: children,
     );
   }
 
   Widget _buildSuggestions() {
     if (_columnCount == null) {
-      return Text("Loading...");
+      return Expanded(
+        key: _globalKey,
+        child: Text("Loading...",
+            style: TextStyle(fontSize: 400.0),
+      ),
+      );
     }
     final rowCount = _characters.length;
     final rows = new List<Widget>(rowCount);
     for (int i = 0; i < rowCount; ++i) {
       rows[i] = _buildRow(i);
     }
-    return Column(
+    return Expanded(
+        
+        child: Column(
+      key: _globalKey,
       mainAxisAlignment: MainAxisAlignment.start,
       verticalDirection: VerticalDirection.down,
       textDirection: TextDirection.ltr,
@@ -157,7 +177,7 @@ class RandomWordsState extends State<RandomWords> {
       mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: rows,
-    );
+    ));
   }
 
   Widget _buildRow(int index) {

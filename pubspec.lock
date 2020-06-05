@@ -289,6 +289,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.8"
+  virtual_keyboard:
+    dependency: "direct main"
+    description:
+      name: virtual_keyboard
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.4"
   xdg_directories:
     dependency: transitive
     description:
