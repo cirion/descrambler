@@ -39,7 +39,7 @@ class RandomWordsState extends State<RandomWords> {
 
   _getWindowHeight() {
     final RenderBox renderBoxRed = _globalKey.currentContext.findRenderObject();
-    return renderBoxRed.size.height - _appBarHeight;
+    return renderBoxRed.size.height;
   }
 
   _getWindowWidth() {
@@ -56,7 +56,7 @@ class RandomWordsState extends State<RandomWords> {
 
       print("txtSize after layout is $glyphWidth x $glyphHeight");
 
-      final int rowCount = (_getWindowHeight() ~/ glyphHeight) - 1;
+      final int rowCount = (_getWindowHeight() ~/ glyphHeight);
       print("Got $rowCount rows");
 
       _columnCount = _getWindowWidth() ~/ glyphWidth;
@@ -156,8 +156,11 @@ class RandomWordsState extends State<RandomWords> {
     if (_columnCount == null) {
       return Expanded(
         key: _globalKey,
-        child: Text("Loading...",
-            style: TextStyle(fontSize: 400.0),
+        child: Container(
+          width: double.infinity,
+            height: double.infinity,
+            child: Text("Loading...",
+        )
       ),
       );
     }
@@ -167,7 +170,7 @@ class RandomWordsState extends State<RandomWords> {
       rows[i] = _buildRow(i);
     }
     return Expanded(
-        
+
         child: Column(
       key: _globalKey,
       mainAxisAlignment: MainAxisAlignment.start,
