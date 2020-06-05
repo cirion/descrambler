@@ -1,3 +1,5 @@
+// I have no idea what I'm doing.
+
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
@@ -74,10 +76,20 @@ class RandomWordsState extends State<RandomWords> {
           _secretWordX = Random().nextInt(_columnCount - secretWordLength);
           _secretWordY = Random().nextInt(rowCount);
         });
-        Timer.periodic(const Duration(seconds: 1), (timer) {
+        Timer.periodic(const Duration(milliseconds: 200), (timer) {
           print("Tick.");
           for (int i = 0; i < rowCount; ++i) {
             for (int j = 0; j < _columnCount; ++j) {
+              if (i == _secretWordY) {
+                if (j >= _secretWordX && j < _secretWordX + secretWordLength) {
+                  final currentChar = _characters[i][j];
+                  final desiredChar =_secretWord.substring(j - _secretWordX, j - _secretWordX + 1);
+                  print("Have $currentChar, want $desiredChar");
+                  if (currentChar.toUpperCase() == desiredChar.toUpperCase()) {
+                    continue;
+                  }
+                }
+              }
               _characters[i][j] = randomAlpha(2).substring(0, 1);
             }
           }
@@ -115,7 +127,6 @@ class RandomWordsState extends State<RandomWords> {
   @override
   Widget build(BuildContext context) {
     final longerRando = randomAlpha(2);
-    print("Longer rando = $longerRando");
     final appBar = AppBar(
       title: Text('Startup Name Generator'),
     );
