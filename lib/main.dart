@@ -60,7 +60,7 @@ class RandomWordsState extends State<RandomWords> {
 
       _columnCount = _getWindowWidth() ~/ glyphWidth;
 
-      _secretWord = randomChoice(nouns);
+      _secretWord = randomChoice(nouns.toList().where((element) => element.length >= 6 && element.length <= 12));
       final secretWordLength = _secretWord.length;
 
       _characters = new List(rowCount);
