@@ -32,7 +32,6 @@ class RandomWordsState extends State<RandomWords> {
   int _secretWordX;
   int _secretWordY;
   int _columnCount;
-  double _appBarHeight;
   GlobalKey _globalKey = GlobalKey();
   String _inputWord = "";
 
@@ -108,14 +107,6 @@ class RandomWordsState extends State<RandomWords> {
         maxLines: 1,
         textDirection: TextDirection.ltr)
       ..layout(minWidth: 0, maxWidth: double.infinity);
-    final lineHeight = textPainter.preferredLineHeight;
-    final metrics = textPainter.computeLineMetrics()[0];
-    final metricH = metrics.height;
-    final metricAscent = metrics.ascent;
-    final metricDescent = metrics.descent;
-    final metricUnscaledAscent = metrics.unscaledAscent;
-    final metricBaseline = metrics.baseline;
-    print ("Computed text info (want 24): $lineHeight / $metricH / $metricAscent / $metricDescent / $metricUnscaledAscent / $metricBaseline");
     return textPainter.size;
   }
 
@@ -132,8 +123,6 @@ class RandomWordsState extends State<RandomWords> {
       title: Text('Startup Name Generator'),
       backgroundColor: Colors.lightGreen,
     );
-    final appBarSize = appBar.preferredSize.height;
-    _appBarHeight = appBarSize;
 
     final keyboard = Container(
       // Keyboard is transparent
