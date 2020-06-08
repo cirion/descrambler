@@ -12,7 +12,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:random_string/random_string.dart';
-import 'package:virtual_keyboard/virtual_keyboard.dart';
 
 void main() => runApp(MyApp());
 
@@ -20,7 +19,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     print("Building app.");
-    return MaterialApp(title: 'Startup Name Generator', home: RandomWords());
+    return MaterialApp(title: 'CK2020', home: RandomWords());
   }
 }
 
@@ -124,29 +123,19 @@ class RandomWordsState extends State<RandomWords> {
     });
   }
 
+  var _controller = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     final appBar = AppBar(
-      title: Text('Startup Name Generator'),
+      title: Text('CK2020'),
       backgroundColor: Colors.lightGreen,
-    );
-
-    final keyboard = Container(
-      // Keyboard is transparent
-      color: Colors.lightGreen,
-      child: VirtualKeyboard(
-          // [0-9] + .
-          type: VirtualKeyboardType.Alphanumeric,
-          // Callback for key press event
-          onKeyPress: (key) => _onKeyPress),
     );
 
     final input = Text(
       _inputWord,
       style: _monoFont,
     );
-
-    var _controller = TextEditingController();
 
     void _handleSubmitted(String value) {
       if (value == _secretWord) {
@@ -157,14 +146,13 @@ class RandomWordsState extends State<RandomWords> {
     }
 
     final textField = TextField(
-      //controller: _controller,
-    onSubmitted: (newValue) {
-      _handleSubmitted(newValue);
-      _controller.clear();
-    },
-    focusNode: _focusNode,
-    keyboardType: TextInputType.
-    text,
+      controller: _controller,
+      onSubmitted: (newValue) {
+        _handleSubmitted(newValue);
+        _controller.clear();
+      },
+      focusNode: _focusNode,
+      keyboardType: TextInputType.text,
       autofocus: true,
       decoration: InputDecoration(),
     );
@@ -174,7 +162,6 @@ class RandomWordsState extends State<RandomWords> {
         _buildSuggestions(),
         textField,
         input,
-        //  keyboard
       ],
     );
 
@@ -182,30 +169,6 @@ class RandomWordsState extends State<RandomWords> {
       appBar: appBar,
       body: children,
     );
-  }
-
-  /// Fired when the virtual keyboard key is pressed.
-  _onKeyPress(VirtualKeyboardKey key) {
-    if (key.keyType == VirtualKeyboardKeyType.String) {
-      setState(() {
-        _inputWord = _inputWord + key.text.toLowerCase();
-      });
-    } else if (key.keyType == VirtualKeyboardKeyType.Action) {
-      switch (key.action) {
-        case VirtualKeyboardKeyAction.Backspace:
-          if (_inputWord.length == 0) return;
-          setState(() {
-            _inputWord = _inputWord.substring(0, _inputWord.length - 1);
-          });
-          break;
-        case VirtualKeyboardKeyAction.Return:
-          setState(() {
-            _inputWord = "";
-          });
-          break;
-        default:
-      }
-    }
   }
 
   Widget _buildSuggestions() {

@@ -32,7 +32,6 @@ dependencies:
   dart_random_choice: ^0.0.2
   google_fonts: ^1.1.0
   random_string: ^1.1.0
-  virtual_keyboard: ^0.1.4
 
 dev_dependencies:
   flutter_test:
