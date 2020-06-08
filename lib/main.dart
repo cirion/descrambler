@@ -155,17 +155,60 @@ class RandomWordsState extends State<RandomWords> {
       }
     }
 
-    final animatedOpacity = AnimatedOpacity(
+    final incorrectOpacity = AnimatedOpacity(
       // If the widget is visible, animate to 0.0 (invisible).
       // If the widget is hidden, animate to 1.0 (fully visible).
       opacity: _guess == Guess.incorrect ? 1.0 : 0.0,
       duration: Duration(milliseconds: 500),
       // The green box must be a child of the AnimatedOpacity widget.
-      child: Container(
-        width: double.infinity,
-        height: 200.0,
-        color: Colors.green,
+      child: Text(
+        "That's not it...",
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          backgroundColor: Colors.red,
+          color: Colors.white,
+        ),
       ),
+    );
+
+    final correctOpacity = AnimatedOpacity(
+      // If the widget is visible, animate to 0.0 (invisible).
+      // If the widget is hidden, animate to 1.0 (fully visible).
+      opacity: _guess == Guess.correct ? 1.0 : 0.0,
+      duration: Duration(milliseconds: 500),
+      // The green box must be a child of the AnimatedOpacity widget.
+      child: Text(
+        "Yes!",
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          backgroundColor: Colors.blue,
+          color: Colors.white,
+        ),
+      ),
+    );
+
+    final noneOpacity = AnimatedOpacity(
+      // If the widget is visible, animate to 0.0 (invisible).
+      // If the widget is hidden, animate to 1.0 (fully visible).
+      opacity: _guess == Guess.none ? 1.0 : 0.0,
+      duration: Duration(milliseconds: 500),
+      // The green box must be a child of the AnimatedOpacity widget.
+      child: Text(
+        "What is it?",
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          backgroundColor: Colors.white,
+          color: Colors.black87,
+        ),
+      ),
+    );
+
+    final stack = Stack(
+      children: <Widget>[
+        incorrectOpacity,
+        correctOpacity,
+        noneOpacity,
+      ],
     );
 
     final textField = TextField(
@@ -182,7 +225,7 @@ class RandomWordsState extends State<RandomWords> {
 
     final children = Column(
       children: <Widget>[
-        animatedOpacity,
+        stack,
         _buildSuggestions(),
         textField,
         input,
