@@ -23,6 +23,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
+enum Guess { correct, incorrect, none }
+
 class RandomWordsState extends State<RandomWords> {
   List<String> _suggestions = new List<String>();
   final _monoFont = GoogleFonts.robotoMono(
@@ -33,6 +35,8 @@ class RandomWordsState extends State<RandomWords> {
   int _columnCount;
   GlobalKey _globalKey = GlobalKey();
   String _inputWord = "";
+
+  Guess _guess = Guess.none;
 
   List<List<String>> _characters = new List<List<String>>();
 
@@ -138,12 +142,31 @@ class RandomWordsState extends State<RandomWords> {
     );
 
     void _handleSubmitted(String value) {
-      if (value == _secretWord) {
+      if (value.toLowerCase() == _secretWord.toLowerCase()) {
         print("You won!!");
+        setState(() {
+          _guess = Guess.correct;
+        });
       } else {
+        setState(() {
+          _guess = Guess.incorrect;
+        });
         print("Sorry, try again.");
       }
     }
+
+    final animatedOpacity = AnimatedOpacity(
+      // If the widget is visible, animate to 0.0 (invisible).
+      // If the widget is hidden, animate to 1.0 (fully visible).
+      opacity: _guess == Guess.incorrect ? 1.0 : 0.0,
+      duration: Duration(milliseconds: 500),
+      // The green box must be a child of the AnimatedOpacity widget.
+      child: Container(
+        width: double.infinity,
+        height: 200.0,
+        color: Colors.green,
+      ),
+    );
 
     final textField = TextField(
       controller: _controller,
@@ -159,6 +182,7 @@ class RandomWordsState extends State<RandomWords> {
 
     final children = Column(
       children: <Widget>[
+        animatedOpacity,
         _buildSuggestions(),
         textField,
         input,
