@@ -49,19 +49,20 @@ class RandomWordsState extends State<RandomWords> {
 
   _afterLayout(_) {
     Future.delayed(const Duration(milliseconds: 1000), () {
-
       final Size txtSize = _textSize("M", _monoFont);
       final glyphWidth = txtSize.width;
       final glyphHeight = txtSize.height;
 
       print("txtSize after layout is $glyphWidth x $glyphHeight");
 
-      final int rowCount = (_getWindowHeight() ~/ glyphHeight) - 1;
+      final int rowCount = (_getWindowHeight() ~/ glyphHeight);
       print("Got $rowCount rows");
 
       _columnCount = _getWindowWidth() ~/ glyphWidth;
 
-      _secretWord = randomChoice(nouns.toList().where((element) => element.length >= 6 && element.length <= 12));
+      _secretWord = randomChoice(nouns
+          .toList()
+          .where((element) => element.length >= 6 && element.length <= 12));
       final secretWordLength = _secretWord.length;
 
       _characters = new List(rowCount);
@@ -78,14 +79,13 @@ class RandomWordsState extends State<RandomWords> {
           _secretWordY = Random().nextInt(rowCount);
         });
         Timer.periodic(const Duration(milliseconds: 200), (timer) {
-          print("Tick.");
           for (int i = 0; i < rowCount; ++i) {
             for (int j = 0; j < _columnCount; ++j) {
               if (i == _secretWordY) {
                 if (j >= _secretWordX && j < _secretWordX + secretWordLength) {
                   final currentChar = _characters[i][j];
-                  final desiredChar =_secretWord.substring(j - _secretWordX, j - _secretWordX + 1);
-                  print("Have $currentChar, want $desiredChar");
+                  final desiredChar = _secretWord.substring(
+                      j - _secretWordX, j - _secretWordX + 1);
                   if (currentChar.toUpperCase() == desiredChar.toUpperCase()) {
                     continue;
                   }
@@ -94,8 +94,7 @@ class RandomWordsState extends State<RandomWords> {
               _characters[i][j] = randomAlpha(2).substring(0, 1);
             }
           }
-          setState(() {
-          });
+          setState(() {});
         });
       }
     });
@@ -110,11 +109,19 @@ class RandomWordsState extends State<RandomWords> {
     return textPainter.size;
   }
 
+  FocusNode _focusNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
-    print("initState");
+
     WidgetsBinding.instance.addPostFrameCallback(_afterLayout);
+
+    _focusNode.addListener(() {
+      if (!_focusNode.hasFocus) {
+        FocusScope.of(context).requestFocus(_focusNode);
+      }
+    });
   }
 
   @override
@@ -128,7 +135,7 @@ class RandomWordsState extends State<RandomWords> {
       // Keyboard is transparent
       color: Colors.lightGreen,
       child: VirtualKeyboard(
-        // [0-9] + .
+          // [0-9] + .
           type: VirtualKeyboardType.Alphanumeric,
           // Callback for key press event
           onKeyPress: (key) => _onKeyPress),
@@ -139,10 +146,36 @@ class RandomWordsState extends State<RandomWords> {
       style: _monoFont,
     );
 
+    var _controller = TextEditingController();
+
+    void _handleSubmitted(String value) {
+      if (value == _secretWord) {
+        print("You won!!");
+      } else {
+        print("Sorry, try again.");
+      }
+    }
+
+    final textField = TextField(
+      //controller: _controller,
+    onSubmitted: (newValue) {
+      _handleSubmitted(newValue);
+      _controller.clear();
+    },
+    focusNode: _focusNode,
+    keyboardType: TextInputType.
+    text,
+      autofocus: true,
+      decoration: InputDecoration(),
+    );
+
     final children = Column(
-      children: <Widget>[_buildSuggestions(),
+      children: <Widget>[
+        _buildSuggestions(),
+        textField,
         input,
-        keyboard],
+        //  keyboard
+      ],
     );
 
     return Scaffold(
@@ -180,11 +213,11 @@ class RandomWordsState extends State<RandomWords> {
       return Expanded(
         key: _globalKey,
         child: Container(
-          width: double.infinity,
+            width: double.infinity,
             height: double.infinity,
-            child: Text("Loading...",
-        )
-      ),
+            child: Text(
+              "Loading...",
+            )),
       );
     }
     final rowCount = _characters.length;
@@ -193,7 +226,6 @@ class RandomWordsState extends State<RandomWords> {
       rows[i] = _buildRow(i);
     }
     return Expanded(
-
         child: Column(
       key: _globalKey,
       mainAxisAlignment: MainAxisAlignment.start,
@@ -209,21 +241,21 @@ class RandomWordsState extends State<RandomWords> {
   Widget _buildRow(int index) {
     final chars = new List<Widget>(_columnCount);
     for (int i = 0; i < _columnCount; ++i) {
-        chars[i] = Text(
-          _characters[index][i],
-          style: _monoFont,
-          softWrap: false,
-          overflow: TextOverflow.clip,
-          maxLines: 1,
-        );
-      }
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        mainAxisSize: MainAxisSize.max,
-        textBaseline: TextBaseline.ideographic,
-        textDirection: TextDirection.ltr,
-        children: chars,
+      chars[i] = Text(
+        _characters[index][i],
+        style: _monoFont,
+        softWrap: false,
+        overflow: TextOverflow.clip,
+        maxLines: 1,
       );
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisSize: MainAxisSize.max,
+      textBaseline: TextBaseline.ideographic,
+      textDirection: TextDirection.ltr,
+      children: chars,
+    );
   }
 }
 
