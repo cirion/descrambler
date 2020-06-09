@@ -39,6 +39,7 @@ class RandomWordsState extends State<RandomWords> {
   String _inputWord = "";
   int _rotationIntervalMillis = 1000;
   Timer _timer;
+  int _victories = 0;
 
   Guess _guess = Guess.none;
 
@@ -154,6 +155,7 @@ class RandomWordsState extends State<RandomWords> {
         print("You won!!");
         setState(() {
           _guess = Guess.correct;
+          _victories = _victories + 1;
           _rotationIntervalMillis = max(
               (_rotationIntervalMillis * _rotationSpeedFactor).toInt(),
               _minRotationMillis);
@@ -173,14 +175,12 @@ class RandomWordsState extends State<RandomWords> {
       opacity: _guess == Guess.incorrect ? 1.0 : 0.0,
       duration: Duration(milliseconds: 500),
       // The green box must be a child of the AnimatedOpacity widget.
-      child: Text(
+      child: Center(child: Text(
         "That's not it...",
-        textAlign: TextAlign.center,
         style: TextStyle(
-          backgroundColor: Colors.red,
           color: Colors.white,
         ),
-      ),
+      )),
     );
 
     final correctOpacity = AnimatedOpacity(
@@ -189,14 +189,12 @@ class RandomWordsState extends State<RandomWords> {
       opacity: _guess == Guess.correct ? 1.0 : 0.0,
       duration: Duration(milliseconds: 500),
       // The green box must be a child of the AnimatedOpacity widget.
-      child: Text(
+      child: Center(child: Text(
         "Yes!",
-        textAlign: TextAlign.center,
         style: TextStyle(
-          backgroundColor: Colors.blue,
           color: Colors.white,
         ),
-      ),
+      )),
     );
 
     final noneOpacity = AnimatedOpacity(
@@ -205,14 +203,18 @@ class RandomWordsState extends State<RandomWords> {
       opacity: _guess == Guess.none ? 1.0 : 0.0,
       duration: Duration(milliseconds: 500),
       // The green box must be a child of the AnimatedOpacity widget.
-      child: Text(
+      child: Center(child: Text(
         "What is it?",
-        textAlign: TextAlign.center,
         style: TextStyle(
-          backgroundColor: Colors.white,
           color: Colors.black87,
         ),
-      ),
+      )),
+    );
+
+
+    final solved = Text(
+      "Solved ${_victories}",
+          textAlign: TextAlign.start,
     );
 
     final stack = Stack(
@@ -221,6 +223,14 @@ class RandomWordsState extends State<RandomWords> {
         correctOpacity,
         noneOpacity,
       ],
+    );
+
+    if (_victories > 0)
+      stack.children.add(solved);
+
+    final topContainer = Container(
+      child: stack,
+      color: Colors.blue,
     );
 
     final textField = TextField(
@@ -236,8 +246,9 @@ class RandomWordsState extends State<RandomWords> {
     );
 
     final children = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        stack,
+        topContainer,
         _buildSuggestions(),
         textField,
         input,
