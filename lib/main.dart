@@ -33,8 +33,10 @@ class RandomWordsState extends State<RandomWords> {
   int _secretWordX;
   int _secretWordY;
   int _columnCount;
+  int _rowCount;
   GlobalKey _globalKey = GlobalKey();
   String _inputWord = "";
+  int _rotationIntervalMillis = 2000;
 
   Guess _guess = Guess.none;
 
@@ -50,6 +52,47 @@ class RandomWordsState extends State<RandomWords> {
     return renderBoxRed.size.width;
   }
 
+  _generateSecretWord() {
+    _secretWord = randomChoice(nouns
+        .toList()
+        .where((element) => element.length >= 6 && element.length <= 12));
+
+    final secretWordLength = _secretWord.length;
+
+    _characters = new List(_rowCount);
+    for (int i = 0; i < _rowCount; ++i) {
+      _characters[i] = new List(_columnCount);
+      for (int j = 0; j < _columnCount; ++j) {
+        _characters[i][j] = randomAlpha(2).substring(0, 1);
+      }
+    }
+
+    if (_suggestions == null || _suggestions.length == 0) {
+      setState(() {
+        _secretWordX = Random().nextInt(_columnCount - secretWordLength);
+        _secretWordY = Random().nextInt(_rowCount);
+      });
+      Timer.periodic(Duration(milliseconds: _rotationIntervalMillis), (timer) {
+        for (int i = 0; i < _rowCount; ++i) {
+          for (int j = 0; j < _columnCount; ++j) {
+            if (i == _secretWordY) {
+              if (j >= _secretWordX && j < _secretWordX + secretWordLength) {
+                final currentChar = _characters[i][j];
+                final desiredChar = _secretWord.substring(
+                    j - _secretWordX, j - _secretWordX + 1);
+                if (currentChar.toUpperCase() == desiredChar.toUpperCase()) {
+                  continue;
+                }
+              }
+            }
+            _characters[i][j] = randomAlpha(2).substring(0, 1);
+          }
+        }
+        setState(() {});
+      });
+    }
+  }
+
   _afterLayout(_) {
     Future.delayed(const Duration(milliseconds: 1000), () {
       final Size txtSize = _textSize("M", _monoFont);
@@ -58,48 +101,12 @@ class RandomWordsState extends State<RandomWords> {
 
       print("txtSize after layout is $glyphWidth x $glyphHeight");
 
-      final int rowCount = (_getWindowHeight() ~/ glyphHeight);
-      print("Got $rowCount rows");
+      _rowCount = (_getWindowHeight() ~/ glyphHeight);
+      print("Got $_rowCount rows");
 
       _columnCount = _getWindowWidth() ~/ glyphWidth;
 
-      _secretWord = randomChoice(nouns
-          .toList()
-          .where((element) => element.length >= 6 && element.length <= 12));
-      final secretWordLength = _secretWord.length;
-
-      _characters = new List(rowCount);
-      for (int i = 0; i < rowCount; ++i) {
-        _characters[i] = new List(_columnCount);
-        for (int j = 0; j < _columnCount; ++j) {
-          _characters[i][j] = randomAlpha(2).substring(0, 1);
-        }
-      }
-
-      if (_suggestions == null || _suggestions.length == 0) {
-        setState(() {
-          _secretWordX = Random().nextInt(_columnCount - secretWordLength);
-          _secretWordY = Random().nextInt(rowCount);
-        });
-        Timer.periodic(const Duration(milliseconds: 200), (timer) {
-          for (int i = 0; i < rowCount; ++i) {
-            for (int j = 0; j < _columnCount; ++j) {
-              if (i == _secretWordY) {
-                if (j >= _secretWordX && j < _secretWordX + secretWordLength) {
-                  final currentChar = _characters[i][j];
-                  final desiredChar = _secretWord.substring(
-                      j - _secretWordX, j - _secretWordX + 1);
-                  if (currentChar.toUpperCase() == desiredChar.toUpperCase()) {
-                    continue;
-                  }
-                }
-              }
-              _characters[i][j] = randomAlpha(2).substring(0, 1);
-            }
-          }
-          setState(() {});
-        });
-      }
+      _generateSecretWord();
     });
   }
 
