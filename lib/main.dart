@@ -26,7 +26,8 @@ class MyApp extends StatelessWidget {
 enum Guess { correct, incorrect, none }
 
 class RandomWordsState extends State<RandomWords> {
-  List<String> _suggestions = new List<String>();
+  final _minRotationMillis = 250;
+  final _rotationSpeedFactor = 0.8;
   final _monoFont = GoogleFonts.robotoMono(
       fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
   String _secretWord;
@@ -36,7 +37,8 @@ class RandomWordsState extends State<RandomWords> {
   int _rowCount;
   GlobalKey _globalKey = GlobalKey();
   String _inputWord = "";
-  int _rotationIntervalMillis = 2000;
+  int _rotationIntervalMillis = 1000;
+  Timer _timer;
 
   Guess _guess = Guess.none;
 
@@ -67,30 +69,29 @@ class RandomWordsState extends State<RandomWords> {
       }
     }
 
-    if (_suggestions == null || _suggestions.length == 0) {
-      setState(() {
-        _secretWordX = Random().nextInt(_columnCount - secretWordLength);
-        _secretWordY = Random().nextInt(_rowCount);
-      });
-      Timer.periodic(Duration(milliseconds: _rotationIntervalMillis), (timer) {
-        for (int i = 0; i < _rowCount; ++i) {
-          for (int j = 0; j < _columnCount; ++j) {
-            if (i == _secretWordY) {
-              if (j >= _secretWordX && j < _secretWordX + secretWordLength) {
-                final currentChar = _characters[i][j];
-                final desiredChar = _secretWord.substring(
-                    j - _secretWordX, j - _secretWordX + 1);
-                if (currentChar.toUpperCase() == desiredChar.toUpperCase()) {
-                  continue;
-                }
+    setState(() {
+      _secretWordX = Random().nextInt(_columnCount - secretWordLength);
+      _secretWordY = Random().nextInt(_rowCount);
+    });
+    _timer?.cancel();
+    _timer = Timer.periodic(Duration(milliseconds: _rotationIntervalMillis), (timer) {
+      for (int i = 0; i < _rowCount; ++i) {
+        for (int j = 0; j < _columnCount; ++j) {
+          if (i == _secretWordY) {
+            if (j >= _secretWordX && j < _secretWordX + secretWordLength) {
+              final currentChar = _characters[i][j];
+              final desiredChar =
+                  _secretWord.substring(j - _secretWordX, j - _secretWordX + 1);
+              if (currentChar.toUpperCase() == desiredChar.toUpperCase()) {
+                continue;
               }
             }
-            _characters[i][j] = randomAlpha(2).substring(0, 1);
           }
+          _characters[i][j] = randomAlpha(2).substring(0, 1);
         }
-        setState(() {});
-      });
-    }
+      }
+      setState(() {});
+    });
   }
 
   _afterLayout(_) {
@@ -153,7 +154,11 @@ class RandomWordsState extends State<RandomWords> {
         print("You won!!");
         setState(() {
           _guess = Guess.correct;
+          _rotationIntervalMillis = max(
+              (_rotationIntervalMillis * _rotationSpeedFactor).toInt(),
+              _minRotationMillis);
         });
+        _generateSecretWord();
       } else {
         setState(() {
           _guess = Guess.incorrect;
