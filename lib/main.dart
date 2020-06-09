@@ -36,6 +36,8 @@ class RandomWordsState extends State<RandomWords> {
   final _rotationSpeedFactor = 0.8;
   final _monoFont = GoogleFonts.robotoMono(
       fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
+  final _random = Random();
+
   String _secretWord;
   int _secretWordX;
   int _secretWordY;
@@ -43,9 +45,10 @@ class RandomWordsState extends State<RandomWords> {
   int _rowCount;
   GlobalKey _globalKey = GlobalKey();
   String _inputWord = "";
-  int _rotationIntervalMillis = 1000;
+  int _rotationIntervalMillis = 10;
   Timer _timer;
   int _victories = 0;
+  int _charsPerRotation = 20;
 
   Guess _guess = Guess.none;
 
@@ -72,31 +75,37 @@ class RandomWordsState extends State<RandomWords> {
     for (int i = 0; i < _rowCount; ++i) {
       _characters[i] = new List(_columnCount);
       for (int j = 0; j < _columnCount; ++j) {
-        _characters[i][j] = randomAlpha(2).substring(0, 1);
+        _characters[i][j] = "-";// randomAlpha(2).substring(0, 1);
       }
     }
 
     setState(() {
-      _secretWordX = Random().nextInt(_columnCount - secretWordLength);
-      _secretWordY = Random().nextInt(_rowCount);
+      _secretWordX = _random.nextInt(_columnCount - secretWordLength);
+      _secretWordY = _random.nextInt(_rowCount);
     });
     _timer?.cancel();
     _timer = Timer.periodic(Duration(milliseconds: _rotationIntervalMillis),
         (timer) {
-      for (int i = 0; i < _rowCount; ++i) {
-        for (int j = 0; j < _columnCount; ++j) {
-          if (i == _secretWordY) {
-            if (j >= _secretWordX && j < _secretWordX + secretWordLength) {
-              final currentChar = _characters[i][j];
-              final desiredChar =
-                  _secretWord.substring(j - _secretWordX, j - _secretWordX + 1);
-              if (currentChar.toUpperCase() == desiredChar.toUpperCase()) {
-                continue;
-              }
+
+      for (int i = 0; i < _charsPerRotation; ++i) {
+        final i = _random.nextInt(_rowCount);
+        final j = _random.nextInt(_columnCount);
+
+        //for (int i = 0; i < _rowCount; ++i) {
+        //  for (int j = 0; j < _columnCount; ++j) {
+        if (i == _secretWordY) {
+          if (j >= _secretWordX && j < _secretWordX + secretWordLength) {
+            final currentChar = _characters[i][j];
+            final desiredChar =
+            _secretWord.substring(j - _secretWordX, j - _secretWordX + 1);
+            if (currentChar.toUpperCase() == desiredChar.toUpperCase()) {
+              continue;
             }
           }
-          _characters[i][j] = randomAlpha(2).substring(0, 1);
         }
+        //}
+        //}
+        _characters[i][j] = randomAlpha(2).substring(0, 1);
       }
       setState(() {});
     });
@@ -162,9 +171,12 @@ class RandomWordsState extends State<RandomWords> {
         setState(() {
           _guess = Guess.correct;
           _victories = _victories + 1;
+          /*
           _rotationIntervalMillis = max(
               (_rotationIntervalMillis * _rotationSpeedFactor).toInt(),
               _minRotationMillis);
+              
+           */
         });
         _generateSecretWord();
       } else {
