@@ -9,9 +9,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:english_words/english_words.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:random_string/random_string.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() => runApp(MyApp());
 
@@ -19,6 +21,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     print("Building app.");
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     return MaterialApp(title: 'CK2020', home: RandomWords());
   }
 }
@@ -75,7 +81,8 @@ class RandomWordsState extends State<RandomWords> {
       _secretWordY = Random().nextInt(_rowCount);
     });
     _timer?.cancel();
-    _timer = Timer.periodic(Duration(milliseconds: _rotationIntervalMillis), (timer) {
+    _timer = Timer.periodic(Duration(milliseconds: _rotationIntervalMillis),
+        (timer) {
       for (int i = 0; i < _rowCount; ++i) {
         for (int j = 0; j < _columnCount; ++j) {
           if (i == _secretWordY) {
@@ -152,7 +159,6 @@ class RandomWordsState extends State<RandomWords> {
 
     void _handleSubmitted(String value) {
       if (value.toLowerCase() == _secretWord.toLowerCase()) {
-        print("You won!!");
         setState(() {
           _guess = Guess.correct;
           _victories = _victories + 1;
@@ -165,7 +171,6 @@ class RandomWordsState extends State<RandomWords> {
         setState(() {
           _guess = Guess.incorrect;
         });
-        print("Sorry, try again.");
       }
     }
 
@@ -175,7 +180,8 @@ class RandomWordsState extends State<RandomWords> {
       opacity: _guess == Guess.incorrect ? 1.0 : 0.0,
       duration: Duration(milliseconds: 500),
       // The green box must be a child of the AnimatedOpacity widget.
-      child: Center(child: Text(
+      child: Center(
+          child: Text(
         "That's not it...",
         style: TextStyle(
           color: Colors.white,
@@ -189,7 +195,8 @@ class RandomWordsState extends State<RandomWords> {
       opacity: _guess == Guess.correct ? 1.0 : 0.0,
       duration: Duration(milliseconds: 500),
       // The green box must be a child of the AnimatedOpacity widget.
-      child: Center(child: Text(
+      child: Center(
+          child: Text(
         "Yes!",
         style: TextStyle(
           color: Colors.white,
@@ -203,7 +210,8 @@ class RandomWordsState extends State<RandomWords> {
       opacity: _guess == Guess.none ? 1.0 : 0.0,
       duration: Duration(milliseconds: 500),
       // The green box must be a child of the AnimatedOpacity widget.
-      child: Center(child: Text(
+      child: Center(
+          child: Text(
         "What is it?",
         style: TextStyle(
           color: Colors.black87,
@@ -211,13 +219,33 @@ class RandomWordsState extends State<RandomWords> {
       )),
     );
 
+    final solved = Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+      "Solved $_victories",
+      textAlign: TextAlign.start,
+    ));
 
-    final solved = Text(
-      "Solved ${_victories}",
-          textAlign: TextAlign.start,
-    );
+    _launchURL() async {
+      const url = 'https://www.chriskingturnsforty.com';
+      if (await canLaunch(url)) {
+        await launch(url);
+      } else {
+        throw 'Could not launch $url';
+      }
+    }
+
+    final victory = Align(
+      alignment: Alignment.centerRight,
+      child: FlatButton(
+      onPressed: _launchURL,
+      child: Text(
+        "Celebrate!"
+      ),
+    ));
 
     final stack = Stack(
+      alignment: Alignment.center,
       children: <Widget>[
         incorrectOpacity,
         correctOpacity,
@@ -225,12 +253,13 @@ class RandomWordsState extends State<RandomWords> {
       ],
     );
 
-    if (_victories > 0)
-      stack.children.add(solved);
+    if (_victories > 0) stack.children.add(solved);
+    if (_victories > 1) stack.children.add(victory);
 
     final topContainer = Container(
       child: stack,
       color: Colors.blue,
+      height: 40,
     );
 
     final textField = TextField(

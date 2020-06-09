@@ -32,6 +32,7 @@ dependencies:
   dart_random_choice: ^0.0.2
   google_fonts: ^1.1.0
   random_string: ^1.1.0
+  url_launcher: ^5.4.10
 
 dev_dependencies:
   flutter_test:
