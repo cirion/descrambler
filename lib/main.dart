@@ -363,8 +363,10 @@ Release checklist:
 * Change font colors
 * Change background colors
 * lower / upper / mixed-case
+* Select numbers based on total character count
 
 Bonus:
+* Change default / initial characters
 * Play music?
 
  */
