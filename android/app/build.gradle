@@ -38,8 +38,8 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId "com.seberin.startup_namer"
-        minSdkVersion 16
+        applicationId "com.seberin.lexencrypt"
+        minSdkVersion 21
         targetSdkVersion 28
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName

@@ -20,12 +20,11 @@ void main() => runApp(MyApp());
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    print("Building app.");
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    return MaterialApp(title: 'CK2020', home: RandomWords());
+    return MaterialApp(title: 'Lexencrypt', home: RandomWords());
   }
 }
 
@@ -157,7 +156,7 @@ class RandomWordsState extends State<RandomWords> {
   @override
   Widget build(BuildContext context) {
     final appBar = AppBar(
-      title: Text('CK2020'),
+      title: Text('Lexencrypt'),
       backgroundColor: Colors.lightGreen,
     );
 
@@ -175,7 +174,7 @@ class RandomWordsState extends State<RandomWords> {
           _rotationIntervalMillis = max(
               (_rotationIntervalMillis * _rotationSpeedFactor).toInt(),
               _minRotationMillis);
-              
+
            */
         });
         _generateSecretWord();
@@ -357,3 +356,16 @@ class RandomWords extends StatefulWidget {
   @override
   RandomWordsState createState() => RandomWordsState();
 }
+
+/*
+Release checklist:
+* Highlight words on early levels
+* Change font colors
+* Change background colors
+* lower / upper / mixed-case
+
+Bonus:
+* Play music?
+
+ */
+
