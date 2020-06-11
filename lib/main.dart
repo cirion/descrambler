@@ -52,6 +52,8 @@ class RandomWordsState extends State<RandomWords> {
   int _victories = 0;
   double _rotationFactor = 0.1;
   int _hitsToReveal = 2;
+  Duration _delaysBetweenReveals = Duration(seconds: 30);
+  DateTime _nextRevealTime;
 
   Guess _guess = Guess.none;
 
@@ -101,6 +103,7 @@ class RandomWordsState extends State<RandomWords> {
     setState(() {
       _secretWordX = _random.nextInt(_columnCount - secretWordLength);
       _secretWordY = _random.nextInt(_rowCount);
+      _nextRevealTime = DateTime.now().add(_delaysBetweenReveals);
     });
     _timer?.cancel();
     _timer = Timer.periodic(Duration(milliseconds: _rotationIntervalMillis),
@@ -112,7 +115,10 @@ class RandomWordsState extends State<RandomWords> {
         final j = _random.nextInt(_columnCount);
 
             if (_isDesiredChar(i, j)) {
-              _characterHits[i][j]++;
+              if (DateTime.now().isAfter(_nextRevealTime)) {
+                _characterHits[i][j]++;
+                _nextRevealTime = DateTime.now().add(_delaysBetweenReveals);
+              }
               continue;
             }
         _characters[i][j] = randomAlpha(2).substring(0, 1);
@@ -183,6 +189,7 @@ class RandomWordsState extends State<RandomWords> {
           _guess = Guess.correct;
           _victories = _victories + 1;
           _hitsToReveal = _hitsToReveal + 20;
+          _delaysBetweenReveals = Duration(seconds: _delaysBetweenReveals.inSeconds * 2);
         });
         _generateSecretWord();
       } else {
