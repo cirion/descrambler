@@ -1,6 +1,7 @@
 // I have no idea what I'm doing.
 
 import 'dart:async';
+import 'dart:collection';
 import 'dart:math';
 import 'dart:ui';
 
@@ -31,10 +32,12 @@ class MyApp extends StatelessWidget {
 enum Guess { correct, incorrect, none }
 
 class RandomWordsState extends State<RandomWords> {
-  final _minRotationMillis = 250;
-  final _rotationSpeedFactor = 0.8;
   final _monoFont = GoogleFonts.robotoMono(
       fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
+  final _hintFont = GoogleFonts.robotoMono(
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.redAccent);
   final _random = Random();
 
   String _secretWord;
@@ -44,14 +47,16 @@ class RandomWordsState extends State<RandomWords> {
   int _rowCount;
   GlobalKey _globalKey = GlobalKey();
   String _inputWord = "";
-  int _rotationIntervalMillis = 10;
+  int _rotationIntervalMillis = 100;
   Timer _timer;
   int _victories = 0;
-  int _charsPerRotation = 20;
+  double _rotationFactor = 0.1;
+  int _hitsToReveal = 2;
 
   Guess _guess = Guess.none;
 
   List<List<String>> _characters = new List<List<String>>();
+  List<List<int>> _characterHits = new List<List<int>>();
 
   _getWindowHeight() {
     final RenderBox renderBoxRed = _globalKey.currentContext.findRenderObject();
@@ -63,6 +68,18 @@ class RandomWordsState extends State<RandomWords> {
     return renderBoxRed.size.width;
   }
 
+  _isDesiredChar(int i, int j) {
+    if (i == _secretWordY) {
+      if (j >= _secretWordX && j < _secretWordX + _secretWord.length) {
+        final currentChar = _characters[i][j];
+        final desiredChar = _secretWord.substring(
+            j - _secretWordX, j - _secretWordX + 1);
+        return (currentChar.toUpperCase() == desiredChar.toUpperCase());
+      }
+    }
+    return false;
+  }
+
   _generateSecretWord() {
     _secretWord = randomChoice(nouns
         .toList()
@@ -71,10 +88,13 @@ class RandomWordsState extends State<RandomWords> {
     final secretWordLength = _secretWord.length;
 
     _characters = new List(_rowCount);
+    _characterHits = new List(_rowCount);
     for (int i = 0; i < _rowCount; ++i) {
       _characters[i] = new List(_columnCount);
+      _characterHits[i] = new List(_columnCount);
       for (int j = 0; j < _columnCount; ++j) {
-        _characters[i][j] = "-";// randomAlpha(2).substring(0, 1);
+        _characters[i][j] = "-";
+        _characterHits[i][j] = 0;
       }
     }
 
@@ -85,25 +105,16 @@ class RandomWordsState extends State<RandomWords> {
     _timer?.cancel();
     _timer = Timer.periodic(Duration(milliseconds: _rotationIntervalMillis),
         (timer) {
-
-      for (int i = 0; i < _charsPerRotation; ++i) {
+      final charsToRotate =
+          (_rowCount * _columnCount * _rotationFactor).toInt();
+      for (int i = 0; i < charsToRotate; ++i) {
         final i = _random.nextInt(_rowCount);
         final j = _random.nextInt(_columnCount);
 
-        //for (int i = 0; i < _rowCount; ++i) {
-        //  for (int j = 0; j < _columnCount; ++j) {
-        if (i == _secretWordY) {
-          if (j >= _secretWordX && j < _secretWordX + secretWordLength) {
-            final currentChar = _characters[i][j];
-            final desiredChar =
-            _secretWord.substring(j - _secretWordX, j - _secretWordX + 1);
-            if (currentChar.toUpperCase() == desiredChar.toUpperCase()) {
+            if (_isDesiredChar(i, j)) {
+              _characterHits[i][j]++;
               continue;
             }
-          }
-        }
-        //}
-        //}
         _characters[i][j] = randomAlpha(2).substring(0, 1);
       }
       setState(() {});
@@ -119,9 +130,10 @@ class RandomWordsState extends State<RandomWords> {
       print("txtSize after layout is $glyphWidth x $glyphHeight");
 
       _rowCount = (_getWindowHeight() ~/ glyphHeight);
-      print("Got $_rowCount rows");
 
       _columnCount = _getWindowWidth() ~/ glyphWidth;
+
+      print("Got $_rowCount rows and $_columnCount columns.");
 
       _generateSecretWord();
     });
@@ -170,12 +182,7 @@ class RandomWordsState extends State<RandomWords> {
         setState(() {
           _guess = Guess.correct;
           _victories = _victories + 1;
-          /*
-          _rotationIntervalMillis = max(
-              (_rotationIntervalMillis * _rotationSpeedFactor).toInt(),
-              _minRotationMillis);
-
-           */
+          _hitsToReveal = _hitsToReveal + 20;
         });
         _generateSecretWord();
       } else {
@@ -233,11 +240,12 @@ class RandomWordsState extends State<RandomWords> {
     final solved = Align(
         alignment: Alignment.centerLeft,
         child: Text(
-      "Solved $_victories",
-      textAlign: TextAlign.start,
-    ));
+          "Solved $_victories",
+          textAlign: TextAlign.start,
+        ));
 
     _launchURL() async {
+      // TODO: Update URL.
       const url = 'https://www.chriskingturnsforty.com';
       if (await canLaunch(url)) {
         await launch(url);
@@ -247,13 +255,11 @@ class RandomWordsState extends State<RandomWords> {
     }
 
     final victory = Align(
-      alignment: Alignment.centerRight,
-      child: FlatButton(
-      onPressed: _launchURL,
-      child: Text(
-        "Celebrate!"
-      ),
-    ));
+        alignment: Alignment.centerRight,
+        child: FlatButton(
+          onPressed: _launchURL,
+          child: Text("Celebrate!"),
+        ));
 
     final stack = Stack(
       alignment: Alignment.center,
@@ -289,7 +295,7 @@ class RandomWordsState extends State<RandomWords> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         topContainer,
-        _buildSuggestions(),
+        _buildGrid(),
         textField,
         input,
       ],
@@ -301,7 +307,7 @@ class RandomWordsState extends State<RandomWords> {
     );
   }
 
-  Widget _buildSuggestions() {
+  Widget _buildGrid() {
     if (_columnCount == null) {
       return Expanded(
         key: _globalKey,
@@ -334,9 +340,10 @@ class RandomWordsState extends State<RandomWords> {
   Widget _buildRow(int index) {
     final chars = new List<Widget>(_columnCount);
     for (int i = 0; i < _columnCount; ++i) {
+      final font = (_characterHits[index][i] >= _hitsToReveal) ? _hintFont : _monoFont;
       chars[i] = Text(
         _characters[index][i],
-        style: _monoFont,
+        style: font,
         softWrap: false,
         overflow: TextOverflow.clip,
         maxLines: 1,
@@ -370,4 +377,3 @@ Bonus:
 * Play music?
 
  */
-
