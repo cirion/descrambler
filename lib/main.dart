@@ -1,14 +1,13 @@
 // I have no idea what I'm doing.
 
 import 'dart:async';
-import 'dart:collection';
 import 'dart:math';
 import 'dart:ui';
 
 import 'package:dart_random_choice/dart_random_choice.dart';
+import 'package:english_words/english_words.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:english_words/english_words.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -32,8 +31,41 @@ class MyApp extends StatelessWidget {
 enum Guess { correct, incorrect, none }
 
 class RandomWordsState extends State<RandomWords> {
-  final _monoFont = GoogleFonts.robotoMono(
+  static final _monoFont = GoogleFonts.robotoMono(
       fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
+  static final _gray1Font = GoogleFonts.robotoMono(
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.black12);
+  static final _gray2Font = GoogleFonts.robotoMono(
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.black26);
+  static final _gray3Font = GoogleFonts.robotoMono(
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.black38);
+  static final _gray4Font = GoogleFonts.robotoMono(
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.black45);
+  static final _gray5Font = GoogleFonts.robotoMono(
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.black54);
+  static final _gray6Font = GoogleFonts.robotoMono(
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.black87);
+  static final _fonts = [
+    _monoFont,
+    _gray6Font,
+    _gray5Font,
+    _gray4Font,
+    _gray3Font,
+    _gray2Font,
+    _gray1Font,
+  ];
   final _hintFont = GoogleFonts.robotoMono(
       fontSize: 18.0,
       fontFeatures: [FontFeature.tabularFigures()],
@@ -60,6 +92,7 @@ class RandomWordsState extends State<RandomWords> {
 
   List<List<String>> _characters = new List<List<String>>();
   List<List<int>> _characterHits = new List<List<int>>();
+  List<List<int>> _colorIndex = new List<List<int>>();
 
   _getWindowHeight() {
     final RenderBox renderBoxRed = _globalKey.currentContext.findRenderObject();
@@ -75,12 +108,28 @@ class RandomWordsState extends State<RandomWords> {
     if (i == _secretWordY) {
       if (j >= _secretWordX && j < _secretWordX + _secretWord.length) {
         final currentChar = _characters[i][j];
-        final desiredChar = _secretWord.substring(
-            j - _secretWordX, j - _secretWordX + 1);
+        final desiredChar =
+            _secretWord.substring(j - _secretWordX, j - _secretWordX + 1);
         return (currentChar.toUpperCase() == desiredChar.toUpperCase());
       }
     }
     return false;
+  }
+
+  _generateCharacter() {
+    final value = randomAlpha(2).substring(0, 1);
+    if (_victories < 2) {
+      return value.toLowerCase();
+    } else if (_victories < 4) {
+      return value.toUpperCase();
+    }
+    return value;
+  }
+
+  _generateColorIndex() {
+    // TODO: Maybe scale this based on difficulty?
+//    return _random.nextInt(_fonts.length) ~/ 2;
+    return 0;
   }
 
   _generateSecretWord() {
@@ -92,12 +141,15 @@ class RandomWordsState extends State<RandomWords> {
 
     _characters = new List(_rowCount);
     _characterHits = new List(_rowCount);
+    _colorIndex = new List(_rowCount);
     for (int i = 0; i < _rowCount; ++i) {
       _characters[i] = new List(_columnCount);
       _characterHits[i] = new List(_columnCount);
+      _colorIndex[i] = new List(_columnCount);
       for (int j = 0; j < _columnCount; ++j) {
         _characters[i][j] = "-";
         _characterHits[i][j] = 0;
+        _colorIndex[i][j] = _generateColorIndex();
       }
     }
 
@@ -115,14 +167,15 @@ class RandomWordsState extends State<RandomWords> {
         final i = _random.nextInt(_rowCount);
         final j = _random.nextInt(_columnCount);
 
-            if (_isDesiredChar(i, j)) {
-              if (DateTime.now().isAfter(_nextRevealTime)) {
-                _characterHits[i][j] = _characterHits[i][j] + 1;
-                _nextRevealTime = DateTime.now().add(_delaysBetweenReveals);
-              }
-              continue;
-            }
-        _characters[i][j] = randomAlpha(2).substring(0, 1);
+        if (_isDesiredChar(i, j)) {
+          if (DateTime.now().isAfter(_nextRevealTime)) {
+            _characterHits[i][j] = _characterHits[i][j] + 1;
+            _nextRevealTime = DateTime.now().add(_delaysBetweenReveals);
+          }
+          continue;
+        }
+        _characters[i][j] = _generateCharacter();
+        _colorIndex[i][j] = _chooseColorIndex();
       }
       setState(() {});
     });
@@ -190,7 +243,9 @@ class RandomWordsState extends State<RandomWords> {
           _guess = Guess.correct;
           _victories = _victories + 1;
           //_hitsToReveal = _hitsToReveal + 20;
-          _delaysBetweenReveals = Duration(seconds: _delaysBetweenReveals.inSeconds + _extraDelayPerMatch.inSeconds);
+          _delaysBetweenReveals = Duration(
+              seconds: _delaysBetweenReveals.inSeconds +
+                  _extraDelayPerMatch.inSeconds);
         });
         _generateSecretWord();
       } else {
@@ -253,7 +308,7 @@ class RandomWordsState extends State<RandomWords> {
         ));
 
     _launchURL() async {
-      const url = 'https://www.velosmobile.com';
+      const url = 'https://velosmobile.com';
       if (await canLaunch(url)) {
         await launch(url);
       } else {
@@ -344,10 +399,17 @@ class RandomWordsState extends State<RandomWords> {
     ));
   }
 
+  int _chooseColorIndex() {
+    return _random.nextInt(_fonts.length);
+  }
+
   Widget _buildRow(int index) {
     final chars = new List<Widget>(_columnCount);
     for (int i = 0; i < _columnCount; ++i) {
-      final font = (_characterHits[index][i] >= _hitsToReveal) ? _hintFont : _monoFont;
+      // TODO: Maybe I should get rid of _characterHits and just directly set the hint in _colorIndex?
+      final font = (_characterHits[index][i] >= _hitsToReveal)
+          ? _hintFont
+          : _fonts[_colorIndex[index][i]];
       chars[i] = Text(
         _characters[index][i],
         style: font,
@@ -373,7 +435,6 @@ class RandomWords extends StatefulWidget {
 
 /*
 Release checklist:
-* Highlight words on early levels
 * Change font colors
 * Change background colors
 * lower / upper / mixed-case
@@ -382,5 +443,4 @@ Release checklist:
 Bonus:
 * Change default / initial characters
 * Play music?
-
  */
