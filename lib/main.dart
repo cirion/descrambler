@@ -51,8 +51,9 @@ class RandomWordsState extends State<RandomWords> {
   Timer _timer;
   int _victories = 0;
   double _rotationFactor = 0.1;
-  int _hitsToReveal = 2;
+  int _hitsToReveal = 1;
   Duration _delaysBetweenReveals = Duration(seconds: 30);
+  final Duration _extraDelayPerMatch = Duration(seconds: 30);
   DateTime _nextRevealTime;
 
   Guess _guess = Guess.none;
@@ -116,7 +117,7 @@ class RandomWordsState extends State<RandomWords> {
 
             if (_isDesiredChar(i, j)) {
               if (DateTime.now().isAfter(_nextRevealTime)) {
-                _characterHits[i][j]++;
+                _characterHits[i][j] = _characterHits[i][j] + 1;
                 _nextRevealTime = DateTime.now().add(_delaysBetweenReveals);
               }
               continue;
@@ -188,8 +189,8 @@ class RandomWordsState extends State<RandomWords> {
         setState(() {
           _guess = Guess.correct;
           _victories = _victories + 1;
-          _hitsToReveal = _hitsToReveal + 20;
-          _delaysBetweenReveals = Duration(seconds: _delaysBetweenReveals.inSeconds * 2);
+          //_hitsToReveal = _hitsToReveal + 20;
+          _delaysBetweenReveals = Duration(seconds: _delaysBetweenReveals.inSeconds + _extraDelayPerMatch.inSeconds);
         });
         _generateSecretWord();
       } else {
@@ -252,8 +253,7 @@ class RandomWordsState extends State<RandomWords> {
         ));
 
     _launchURL() async {
-      // TODO: Update URL.
-      const url = 'https://www.chriskingturnsforty.com';
+      const url = 'https://www.velosmobile.com';
       if (await canLaunch(url)) {
         await launch(url);
       } else {
