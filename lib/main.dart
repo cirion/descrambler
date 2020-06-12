@@ -24,7 +24,8 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    return MaterialApp(title: 'Lexencrypt', home: RandomWords());
+    return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
+//    return MaterialApp(title: 'Lexencrypt', home: RandomWords());
   }
 }
 
@@ -201,7 +202,7 @@ class RandomWordsState extends State<RandomWords> {
     );
 
     void _handleSubmitted(String value) {
-      if (value.toLowerCase() == _secretWord.toLowerCase()) {
+      if (value.trim().toLowerCase() == _secretWord.toLowerCase()) {
         setState(() {
           _guess = Guess.correct;
           _victories = _victories + 1;
@@ -304,7 +305,7 @@ class RandomWordsState extends State<RandomWords> {
       height: 40,
     );
 
-    final textField = TextField(
+    final _textField = TextField(
       controller: _controller,
       onSubmitted: (newValue) {
         _handleSubmitted(newValue);
@@ -316,17 +317,38 @@ class RandomWordsState extends State<RandomWords> {
       decoration: InputDecoration(),
     );
 
+    final _cupertinoTextField = CupertinoTextField(
+      controller: _controller,
+      onSubmitted: (newValue) {
+        _handleSubmitted(newValue);
+        _controller.clear();
+      },
+      focusNode: _focusNode,
+      keyboardType: TextInputType.text,
+      autofocus: true,
+    );
+
     final children = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         topContainer,
         _buildGrid(),
-        textField,
+//        _textField,
+        _cupertinoTextField,
         input,
       ],
     );
 
-    return Scaffold(
+    return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(
+          backgroundColor: CupertinoColors.activeGreen,
+          middle: Text("Lexencrypt"),
+      ),
+      child: children,
+
+    );
+
+    Scaffold(
       appBar: appBar,
       body: children,
     );
