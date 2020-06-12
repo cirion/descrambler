@@ -1,4 +1,4 @@
-package com.seberin.startup_namer
+package com.seberin.lexencrypt
 
 import io.flutter.embedding.android.FlutterActivity
 
