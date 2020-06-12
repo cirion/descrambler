@@ -33,43 +33,6 @@ enum Guess { correct, incorrect, none }
 class RandomWordsState extends State<RandomWords> {
   static final _monoFont = GoogleFonts.robotoMono(
       fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
-  static final _gray1Font = GoogleFonts.robotoMono(
-      fontSize: 18.0,
-      fontFeatures: [FontFeature.tabularFigures()],
-      color: Colors.black12);
-  static final _gray2Font = GoogleFonts.robotoMono(
-      fontSize: 18.0,
-      fontFeatures: [FontFeature.tabularFigures()],
-      color: Colors.black26);
-  static final _gray3Font = GoogleFonts.robotoMono(
-      fontSize: 18.0,
-      fontFeatures: [FontFeature.tabularFigures()],
-      color: Colors.black38);
-  static final _gray4Font = GoogleFonts.robotoMono(
-      fontSize: 18.0,
-      fontFeatures: [FontFeature.tabularFigures()],
-      color: Colors.black45);
-  static final _gray5Font = GoogleFonts.robotoMono(
-      fontSize: 18.0,
-      fontFeatures: [FontFeature.tabularFigures()],
-      color: Colors.black54);
-  static final _gray6Font = GoogleFonts.robotoMono(
-      fontSize: 18.0,
-      fontFeatures: [FontFeature.tabularFigures()],
-      color: Colors.black87);
-  static final _fonts = [
-    _monoFont,
-    _gray6Font,
-    _gray5Font,
-    _gray4Font,
-    _gray3Font,
-    _gray2Font,
-    _gray1Font,
-  ];
-  final _hintFont = GoogleFonts.robotoMono(
-      fontSize: 18.0,
-      fontFeatures: [FontFeature.tabularFigures()],
-      color: Colors.redAccent);
   final _random = Random();
 
   String _secretWord;
@@ -400,7 +363,7 @@ class RandomWordsState extends State<RandomWords> {
   }
 
   int _chooseColorIndex() {
-    return _random.nextInt(_fonts.length);
+    return _random.nextInt(_fonts.length ~/ 2);
   }
 
   Widget _buildRow(int index) {
@@ -426,6 +389,45 @@ class RandomWordsState extends State<RandomWords> {
       children: chars,
     );
   }
+
+  static final _gray1Font = GoogleFonts.robotoMono(
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.black12);
+  static final _gray2Font = GoogleFonts.robotoMono(
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.black26);
+  static final _gray3Font = GoogleFonts.robotoMono(
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.black38);
+  static final _gray4Font = GoogleFonts.robotoMono(
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.black45);
+  static final _gray5Font = GoogleFonts.robotoMono(
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.black54);
+  static final _gray6Font = GoogleFonts.robotoMono(
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.black87);
+  static final _fonts = [
+    _monoFont,
+    _gray6Font,
+    _gray5Font,
+    _gray4Font,
+    _gray3Font,
+    _gray2Font,
+    _gray1Font,
+  ];
+  final _hintFont = GoogleFonts.robotoMono(
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.redAccent);
+
 }
 
 class RandomWords extends StatefulWidget {
