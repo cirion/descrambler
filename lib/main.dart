@@ -25,8 +25,8 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
-//    return MaterialApp(title: 'Lexencrypt', home: RandomWords());
+    //return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
+    return MaterialApp(title: 'Lexencrypt', home: RandomWords());
   }
 }
 
@@ -321,12 +321,18 @@ class RandomWordsState extends State<RandomWords> {
 
     final solved = Align(
         alignment: Alignment.centerLeft,
-        child: Padding(
+        child:
+        Padding(
             padding: EdgeInsets.all(8.0),
+
             child: Text(
-              "Solved $_victories",
+              " Solved $_victories",
               textAlign: TextAlign.start,
-            )));
+              style: _feedbackStyle,
+            )
+        )
+    //)
+    );
 
     _launchURL() async {
       const url = 'https://velosmobile.com';
@@ -342,7 +348,7 @@ class RandomWordsState extends State<RandomWords> {
         // TODO: Cupertino button here?
         child: FlatButton(
           onPressed: _launchURL,
-          child: Text("Celebrate!"),
+          child: Text("The Hunt Continues..."),
         ));
 
     final stack = Stack(
@@ -377,6 +383,7 @@ class RandomWordsState extends State<RandomWords> {
       decoration: InputDecoration(),
     );
 
+    /*
     final _cupertinoTextField = CupertinoTextField(
       controller: _controller,
       onSubmitted: (newValue) {
@@ -388,17 +395,20 @@ class RandomWordsState extends State<RandomWords> {
       autofocus: true,
     );
 
+     */
+
     final children = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         topContainer,
         _buildGrid(),
-//        _textField,
-        _cupertinoTextField,
+        _textField,
+//        _cupertinoTextField,
         input,
       ],
     );
 
+    /*
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         backgroundColor: CupertinoColors.activeGreen,
@@ -407,7 +417,11 @@ class RandomWordsState extends State<RandomWords> {
       child: children,
     );
 
-    Scaffold(
+     */
+
+    //_focusNode.requestFocus();
+
+    return Scaffold(
       appBar: appBar,
       body: children,
     );
@@ -417,12 +431,15 @@ class RandomWordsState extends State<RandomWords> {
     if (_columnCount == null) {
       return Expanded(
         key: _globalKey,
+        child:
+        Padding(
+          padding: EdgeInsets.all(8.0),
         child: Container(
             width: double.infinity,
             height: double.infinity,
             child: Text(
               "Loading...",
-            )),
+            ))),
       );
     }
     final rowCount = _grid.length;
@@ -544,6 +561,7 @@ Release checklist:
 Stretch:
 * Sound effects on success/failure.
 * More feedback messages (especially failure). Test fade.
+* Bundle RobotoMono font into app assets and remove Internet permission.
 
 Post-launch:
 * Save high score
@@ -558,4 +576,7 @@ Profiling:
 * Android emulator by itself (running nothing) is between 10-30% CPU.
 * Android emulator running in debug mode hovers around 100%, with spikes up to 200%.
 
- */
+Bugs:
+* As of 6/14/2020, autofocus does not work on profile or release builds.
+
+*/
