@@ -13,6 +13,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:random_string/random_string.dart';
+import 'package:rxdart/subjects.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 void main() => runApp(MyApp());
@@ -28,6 +29,14 @@ class MyApp extends StatelessWidget {
 //    return MaterialApp(title: 'Lexencrypt', home: RandomWords());
   }
 }
+
+final _gridStreamSubject = PublishSubject<List<List<String>>>();
+Stream<List<List<String>>> get _gridStream => _gridStreamSubject.stream;
+
+final _gray1Font = GoogleFonts.robotoMono(
+    fontSize: 18.0,
+    fontFeatures: [FontFeature.tabularFigures()],
+    color: Colors.black12);
 
 enum Guess { correct, incorrect, none }
 
@@ -53,6 +62,7 @@ class RandomWordsState extends State<RandomWords> {
   DateTime _nextRevealTime;
 
   Guess _guess = Guess.none;
+
 
   List<List<String>> _characters = new List<List<String>>();
   List<List<int>> _characterHits = new List<List<int>>();
@@ -141,7 +151,8 @@ class RandomWordsState extends State<RandomWords> {
         _characters[i][j] = _generateCharacter();
         _colorIndex[i][j] = _chooseColorIndex();
       }
-      setState(() {});
+      _gridStreamSubject.add(_characters);
+      //setState(() {});
     });
   }
 
@@ -395,6 +406,8 @@ class RandomWordsState extends State<RandomWords> {
       final font = (_characterHits[index][i] >= _hitsToReveal)
           ? _hintFont
           : _fonts[_colorIndex[index][i]];
+      chars[i] = StyledBox(index, i);
+      /*
       chars[i] = Text(
         _characters[index][i],
         style: font,
@@ -402,6 +415,8 @@ class RandomWordsState extends State<RandomWords> {
         overflow: TextOverflow.clip,
         maxLines: 1,
       );
+
+       */
     }
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -412,10 +427,6 @@ class RandomWordsState extends State<RandomWords> {
     );
   }
 
-  static final _gray1Font = GoogleFonts.robotoMono(
-      fontSize: 18.0,
-      fontFeatures: [FontFeature.tabularFigures()],
-      color: Colors.black12);
   static final _gray2Font = GoogleFonts.robotoMono(
       fontSize: 18.0,
       fontFeatures: [FontFeature.tabularFigures()],
@@ -455,6 +466,46 @@ class RandomWordsState extends State<RandomWords> {
 class RandomWords extends StatefulWidget {
   @override
   RandomWordsState createState() => RandomWordsState();
+}
+
+class StyledBoxState extends State<StyledBox> {
+
+  final int _x;
+  final int _y;
+
+  String _currentCharacter = "-";
+
+  StyledBoxState(this._x, this._y) {
+    _gridStream.listen((grid) {
+      if (grid[_x][_y] != _currentCharacter) {
+        setState(() {
+          _currentCharacter = grid[_x][_y];
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      _currentCharacter,
+      style: _gray1Font,
+      softWrap: false,
+      overflow: TextOverflow.clip,
+      maxLines: 1,
+    );
+  }
+}
+
+class StyledBox extends StatefulWidget {
+
+  int _x;
+  int _y;
+
+  StyledBox(this._x, this._y);
+
+ @override
+ StyledBoxState createState() => StyledBoxState(_x, _y);
 }
 
 /*
