@@ -467,4 +467,10 @@ Release checklist:
 Bonus:
 * Change default / initial characters
 * Play music?
+
+Profiling:
+* As of 6/13, the web version starts at ~33% CPU, then spikes to ~100%.abstract
+* Android emulator by itself (running nothing) is between 10-30% CPU.
+* Android emulator running in debug mode hovers around 100%, with spikes up to 200%.
+
  */
