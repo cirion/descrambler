@@ -30,8 +30,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
-final _gridStreamSubject = PublishSubject<List<List<String>>>();
-Stream<List<List<String>>> get _gridStream => _gridStreamSubject.stream;
+final _gridStreamSubject = PublishSubject<List<List<Box>>>();
+Stream<List<List<Box>>> get _gridStream => _gridStreamSubject.stream;
 
 final _gray1Font = GoogleFonts.robotoMono(
     fontSize: 18.0,
@@ -39,6 +39,28 @@ final _gray1Font = GoogleFonts.robotoMono(
     color: Colors.black12);
 
 enum Guess { correct, incorrect, none }
+
+class Box {
+  String character;
+  TextStyle style;
+  int hits;
+  Box(this.character, this.style, this.hits);
+
+  Box clone() {
+    return Box(character, style, hits);
+}
+
+  @override
+  bool operator ==(other) {
+    return (other.character == this.character && other.style == this.style);
+  }
+
+  @override
+  int get hashCode {
+    return character.hashCode + style.toStringShort().hashCode;
+  }
+
+}
 
 class RandomWordsState extends State<RandomWords> {
   static final _monoFont = GoogleFonts.robotoMono(
@@ -64,9 +86,10 @@ class RandomWordsState extends State<RandomWords> {
   Guess _guess = Guess.none;
 
 
-  List<List<String>> _characters = new List<List<String>>();
-  List<List<int>> _characterHits = new List<List<int>>();
-  List<List<int>> _colorIndex = new List<List<int>>();
+  //List<List<String>> _characters = new List<List<String>>();
+  //List<List<int>> _characterHits = new List<List<int>>();
+  //List<List<int>> _colorIndex = new List<List<int>>();
+  List<List<Box>> _grid = new List<List<Box>>();
 
   _getWindowHeight() {
     final RenderBox renderBoxRed = _globalKey.currentContext.findRenderObject();
@@ -81,7 +104,7 @@ class RandomWordsState extends State<RandomWords> {
   _isDesiredChar(int i, int j) {
     if (i == _secretWordY) {
       if (j >= _secretWordX && j < _secretWordX + _secretWord.length) {
-        final currentChar = _characters[i][j];
+        final currentChar = _grid[i][j].character;
         final desiredChar =
             _secretWord.substring(j - _secretWordX, j - _secretWordX + 1);
         return (currentChar.toUpperCase() == desiredChar.toUpperCase());
@@ -113,17 +136,14 @@ class RandomWordsState extends State<RandomWords> {
 
     final secretWordLength = _secretWord.length;
 
-    _characters = new List(_rowCount);
-    _characterHits = new List(_rowCount);
-    _colorIndex = new List(_rowCount);
+    _grid = new List(_rowCount);
     for (int i = 0; i < _rowCount; ++i) {
-      _characters[i] = new List(_columnCount);
-      _characterHits[i] = new List(_columnCount);
-      _colorIndex[i] = new List(_columnCount);
+      _grid[i] = new List(_columnCount);
       for (int j = 0; j < _columnCount; ++j) {
-        _characters[i][j] = "-";
-        _characterHits[i][j] = 0;
-        _colorIndex[i][j] = _generateColorIndex();
+        _grid[i][j] = Box("-", _gray1Font, 0);
+        //_characters[i][j] = "-";
+        //_characterHits[i][j] = 0;
+        //_colorIndex[i][j] = _generateColorIndex();
       }
     }
 
@@ -141,17 +161,22 @@ class RandomWordsState extends State<RandomWords> {
         final i = _random.nextInt(_rowCount);
         final j = _random.nextInt(_columnCount);
 
+        final box = _grid[i][j];
+
         if (_isDesiredChar(i, j)) {
           if (DateTime.now().isAfter(_nextRevealTime)) {
-            _characterHits[i][j] = _characterHits[i][j] + 1;
-            _nextRevealTime = DateTime.now().add(_delaysBetweenReveals);
+            box.hits = box.hits + 1;
+            if (box.hits >= _hitsToReveal) {
+              box.style = _hintFont;
+              _nextRevealTime = DateTime.now().add(_delaysBetweenReveals);
+            }
           }
           continue;
         }
-        _characters[i][j] = _generateCharacter();
-        _colorIndex[i][j] = _chooseColorIndex();
+        box.character = _generateCharacter();
+        box.style = _fonts[_chooseColorIndex()];
       }
-      _gridStreamSubject.add(_characters);
+      _gridStreamSubject.add(_grid);
       //setState(() {});
     });
   }
@@ -377,7 +402,7 @@ class RandomWordsState extends State<RandomWords> {
             )),
       );
     }
-    final rowCount = _characters.length;
+    final rowCount = _grid.length;
     final rows = new List<Widget>(rowCount);
     for (int i = 0; i < rowCount; ++i) {
       rows[i] = _buildRow(i);
@@ -402,21 +427,8 @@ class RandomWordsState extends State<RandomWords> {
   Widget _buildRow(int index) {
     final chars = new List<Widget>(_columnCount);
     for (int i = 0; i < _columnCount; ++i) {
-      // TODO: Maybe I should get rid of _characterHits and just directly set the hint in _colorIndex?
-      final font = (_characterHits[index][i] >= _hitsToReveal)
-          ? _hintFont
-          : _fonts[_colorIndex[index][i]];
-      chars[i] = StyledBox(index, i);
-      /*
-      chars[i] = Text(
-        _characters[index][i],
-        style: font,
-        softWrap: false,
-        overflow: TextOverflow.clip,
-        maxLines: 1,
-      );
-
-       */
+      final box = _grid[index][i];
+      chars[i] = StyledBox(index, i, box);
     }
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -473,13 +485,14 @@ class StyledBoxState extends State<StyledBox> {
   final int _x;
   final int _y;
 
-  String _currentCharacter = "-";
+  Box _box;
 
-  StyledBoxState(this._x, this._y) {
+  StyledBoxState(this._x, this._y, this._box) {
     _gridStream.listen((grid) {
-      if (grid[_x][_y] != _currentCharacter) {
+      final box = grid[_x][_y];
+      if (box != _box) {
         setState(() {
-          _currentCharacter = grid[_x][_y];
+          _box = box.clone();
         });
       }
     });
@@ -488,8 +501,8 @@ class StyledBoxState extends State<StyledBox> {
   @override
   Widget build(BuildContext context) {
     return Text(
-      _currentCharacter,
-      style: _gray1Font,
+      _box.character,
+      style: _box.style,
       softWrap: false,
       overflow: TextOverflow.clip,
       maxLines: 1,
@@ -499,13 +512,14 @@ class StyledBoxState extends State<StyledBox> {
 
 class StyledBox extends StatefulWidget {
 
-  int _x;
-  int _y;
+  final int _x;
+  final int _y;
+  final Box _box;
 
-  StyledBox(this._x, this._y);
+  StyledBox(this._x, this._y, this._box);
 
  @override
- StyledBoxState createState() => StyledBoxState(_x, _y);
+ StyledBoxState createState() => StyledBoxState(_x, _y, _box.clone());
 }
 
 /*
