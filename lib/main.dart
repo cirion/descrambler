@@ -48,7 +48,7 @@ class Box {
 
   Box clone() {
     return Box(character, style, hits);
-}
+  }
 
   @override
   bool operator ==(other) {
@@ -59,7 +59,6 @@ class Box {
   int get hashCode {
     return character.hashCode + style.toStringShort().hashCode;
   }
-
 }
 
 class RandomWordsState extends State<RandomWords> {
@@ -85,11 +84,13 @@ class RandomWordsState extends State<RandomWords> {
 
   Guess _guess = Guess.none;
 
-
-  //List<List<String>> _characters = new List<List<String>>();
-  //List<List<int>> _characterHits = new List<List<int>>();
-  //List<List<int>> _colorIndex = new List<List<int>>();
   List<List<Box>> _grid = new List<List<Box>>();
+
+  final _feedbackStyle = TextStyle(
+    color: Colors.white,
+  );
+
+  final _fadeDuration = Duration(milliseconds: 500);
 
   _getWindowHeight() {
     final RenderBox renderBoxRed = _globalKey.currentContext.findRenderObject();
@@ -114,6 +115,9 @@ class RandomWordsState extends State<RandomWords> {
   }
 
   _generateCharacter() {
+    // There's a bug in randomAlpha that causes it to only return capital
+    // letters when you request a single character. So, request 2 instead and
+    // trim down to the 1 we actually want.
     final value = randomAlpha(2).substring(0, 1);
     if (_victories < 2) {
       return value.toLowerCase();
@@ -123,10 +127,35 @@ class RandomWordsState extends State<RandomWords> {
     return value;
   }
 
-  _generateColorIndex() {
-    // TODO: Maybe scale this based on difficulty?
-//    return _random.nextInt(_fonts.length) ~/ 2;
-    return 0;
+  _generateColor() {
+    final index =
+        min(_random.nextInt(_victories ~/ 2 + 1), _fonts.length - 1);
+    return _fonts[index];
+  }
+
+  _generateStartingColor() {
+    final index =
+        min(_random.nextInt(_victories ~/ 4 + 1), _fonts.length - 1);
+    return _fonts[index];
+  }
+
+  static final _startingCharacters = ["-", "|", "/", "\\", "*"];
+
+  _generateStartingCharacter() {
+    if (_victories == 0) {
+      return "-";
+    } else if (_victories == 1) {
+      return "|";
+    } else if (_victories == 2) {
+      return "/";
+    } else if (_victories == 3) {
+      return "\\";
+    } else if (_victories == 4) {
+      return "*";
+    } else {
+      return _startingCharacters[
+          _random.nextInt(_startingCharacters.length - 1)];
+    }
   }
 
   _generateSecretWord() {
@@ -140,10 +169,8 @@ class RandomWordsState extends State<RandomWords> {
     for (int i = 0; i < _rowCount; ++i) {
       _grid[i] = new List(_columnCount);
       for (int j = 0; j < _columnCount; ++j) {
-        _grid[i][j] = Box("-", _gray1Font, 0);
-        //_characters[i][j] = "-";
-        //_characterHits[i][j] = 0;
-        //_colorIndex[i][j] = _generateColorIndex();
+        _grid[i][j] =
+            Box(_generateStartingCharacter(), _generateStartingColor(), 0);
       }
     }
 
@@ -174,10 +201,12 @@ class RandomWordsState extends State<RandomWords> {
           continue;
         }
         box.character = _generateCharacter();
-        box.style = _fonts[_chooseColorIndex()];
+        box.style = _generateColor();
       }
+      // Rebuilding the whole screen is expensive, so instead we publish the
+      // update event, and let each leaf-node child in the grid decide whether
+      // it needs to invalidate.
       _gridStreamSubject.add(_grid);
-      //setState(() {});
     });
   }
 
@@ -242,7 +271,6 @@ class RandomWordsState extends State<RandomWords> {
         setState(() {
           _guess = Guess.correct;
           _victories = _victories + 1;
-          //_hitsToReveal = _hitsToReveal + 20;
           _delaysBetweenReveals = Duration(
               seconds: _delaysBetweenReveals.inSeconds +
                   _extraDelayPerMatch.inSeconds);
@@ -259,14 +287,11 @@ class RandomWordsState extends State<RandomWords> {
       // If the widget is visible, animate to 0.0 (invisible).
       // If the widget is hidden, animate to 1.0 (fully visible).
       opacity: _guess == Guess.incorrect ? 1.0 : 0.0,
-      duration: Duration(milliseconds: 500),
-      // The green box must be a child of the AnimatedOpacity widget.
+      duration: _fadeDuration,
       child: Center(
           child: Text(
         "That's not it...",
-        style: TextStyle(
-          color: Colors.white,
-        ),
+            style: _feedbackStyle,
       )),
     );
 
@@ -274,14 +299,11 @@ class RandomWordsState extends State<RandomWords> {
       // If the widget is visible, animate to 0.0 (invisible).
       // If the widget is hidden, animate to 1.0 (fully visible).
       opacity: _guess == Guess.correct ? 1.0 : 0.0,
-      duration: Duration(milliseconds: 500),
-      // The green box must be a child of the AnimatedOpacity widget.
+      duration: _fadeDuration,
       child: Center(
           child: Text(
-        "Yes!",
-        style: TextStyle(
-          color: Colors.white,
-        ),
+        "That's right!",
+            style: _feedbackStyle,
       )),
     );
 
@@ -289,23 +311,22 @@ class RandomWordsState extends State<RandomWords> {
       // If the widget is visible, animate to 0.0 (invisible).
       // If the widget is hidden, animate to 1.0 (fully visible).
       opacity: _guess == Guess.none ? 1.0 : 0.0,
-      duration: Duration(milliseconds: 500),
-      // The green box must be a child of the AnimatedOpacity widget.
+      duration: _fadeDuration,
       child: Center(
           child: Text(
-        "What is it?",
-        style: TextStyle(
-          color: Colors.black87,
-        ),
+        "What is the word?",
+            style: _feedbackStyle,
       )),
     );
 
     final solved = Align(
         alignment: Alignment.centerLeft,
-        child: Text(
-          "Solved $_victories",
-          textAlign: TextAlign.start,
-        ));
+        child: Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              "Solved $_victories",
+              textAlign: TextAlign.start,
+            )));
 
     _launchURL() async {
       const url = 'https://velosmobile.com';
@@ -318,6 +339,7 @@ class RandomWordsState extends State<RandomWords> {
 
     final victory = Align(
         alignment: Alignment.centerRight,
+        // TODO: Cupertino button here?
         child: FlatButton(
           onPressed: _launchURL,
           child: Text("Celebrate!"),
@@ -332,7 +354,9 @@ class RandomWordsState extends State<RandomWords> {
       ],
     );
 
-    if (_victories > 0) stack.children.add(solved);
+    // TODO: Testing style.
+    //if (_victories > 0) stack.children.add(solved);
+    if (true) stack.children.add(solved);
     if (_victories > 1) stack.children.add(victory);
 
     final topContainer = Container(
@@ -377,11 +401,10 @@ class RandomWordsState extends State<RandomWords> {
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-          backgroundColor: CupertinoColors.activeGreen,
-          middle: Text("Lexencrypt"),
+        backgroundColor: CupertinoColors.activeGreen,
+        middle: Text("Lexencrypt"),
       ),
       child: children,
-
     );
 
     Scaffold(
@@ -418,10 +441,6 @@ class RandomWordsState extends State<RandomWords> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: rows,
     ));
-  }
-
-  int _chooseColorIndex() {
-    return _random.nextInt(_fonts.length ~/ 2);
   }
 
   Widget _buildRow(int index) {
@@ -472,7 +491,6 @@ class RandomWordsState extends State<RandomWords> {
       fontSize: 18.0,
       fontFeatures: [FontFeature.tabularFigures()],
       color: Colors.redAccent);
-
 }
 
 class RandomWords extends StatefulWidget {
@@ -481,7 +499,6 @@ class RandomWords extends StatefulWidget {
 }
 
 class StyledBoxState extends State<StyledBox> {
-
   final int _x;
   final int _y;
 
@@ -511,30 +528,33 @@ class StyledBoxState extends State<StyledBox> {
 }
 
 class StyledBox extends StatefulWidget {
-
   final int _x;
   final int _y;
   final Box _box;
 
   StyledBox(this._x, this._y, this._box);
 
- @override
- StyledBoxState createState() => StyledBoxState(_x, _y, _box.clone());
+  @override
+  StyledBoxState createState() => StyledBoxState(_x, _y, _box.clone());
 }
 
 /*
 Release checklist:
-* Change font colors
-* Change background colors
-* lower / upper / mixed-case
-* Select numbers based on total character count
 
-Bonus:
-* Change default / initial characters
-* Play music?
+Stretch:
+* Sound effects on success/failure.
+* More feedback messages (especially failure). Test fade.
+
+Post-launch:
+* Save high score
+* Track time (per-board and/or total)
+* Background and foreground support w/timer
+* Button to restart
+* Music
+* Change background colors
 
 Profiling:
-* As of 6/13, the web version starts at ~33% CPU, then spikes to ~100%.abstract
+* As of 6/13, the web version starts at ~33% CPU, then spikes to ~100%.
 * Android emulator by itself (running nothing) is between 10-30% CPU.
 * Android emulator running in debug mode hovers around 100%, with spikes up to 200%.
 
