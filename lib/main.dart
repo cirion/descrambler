@@ -72,7 +72,6 @@ class RandomWordsState extends State<RandomWords> {
   int _columnCount;
   int _rowCount;
   GlobalKey _globalKey = GlobalKey();
-  String _inputWord = "";
   int _rotationIntervalMillis = 100;
   Timer _timer;
   int _victories = 0;
@@ -211,7 +210,11 @@ class RandomWordsState extends State<RandomWords> {
   }
 
   _afterLayout(_) {
-    Future.delayed(const Duration(milliseconds: 1000), () {
+//    _initBoard();
+  }
+
+  _initBoard() {
+    Future.delayed(const Duration(milliseconds: 100), () {
       final Size txtSize = _textSize("M", _monoFont);
       final glyphWidth = txtSize.width;
       final glyphHeight = txtSize.height;
@@ -246,6 +249,10 @@ class RandomWordsState extends State<RandomWords> {
     WidgetsBinding.instance.addPostFrameCallback(_afterLayout);
 
     _focusNode.addListener(() {
+      print("Has focus? ${_focusNode.hasFocus}");
+      if (_rowCount == null) {
+        _initBoard();
+      }
       if (!_focusNode.hasFocus) {
         FocusScope.of(context).requestFocus(_focusNode);
       }
@@ -259,11 +266,6 @@ class RandomWordsState extends State<RandomWords> {
     final appBar = AppBar(
       title: Text('Lexencrypt'),
       backgroundColor: Colors.lightGreen,
-    );
-
-    final input = Text(
-      _inputWord,
-      style: _monoFont,
     );
 
     void _handleSubmitted(String value) {
@@ -348,7 +350,7 @@ class RandomWordsState extends State<RandomWords> {
         // TODO: Cupertino button here?
         child: FlatButton(
           onPressed: _launchURL,
-          child: Text("The Hunt Continues..."),
+          child: Text("More..."),
         ));
 
     final stack = Stack(
@@ -360,18 +362,22 @@ class RandomWordsState extends State<RandomWords> {
       ],
     );
 
-    // TODO: Testing style.
-    //if (_victories > 0) stack.children.add(solved);
-    if (true) stack.children.add(solved);
-    if (_victories > 1) stack.children.add(victory);
+    if (_victories > 0) stack.children.add(solved);
+    if (_victories > 2) stack.children.add(victory);
 
     final topContainer = Container(
-      child: stack,
+      child: (_rowCount == 0) ? null : stack,
       color: Colors.blue,
       height: 40,
     );
 
+    final decoration = InputDecoration(
+      border: OutlineInputBorder(),
+      labelText: (_rowCount == null) ? 'Tap to start' : null,
+    );
+
     final _textField = TextField(
+      decoration: decoration,
       controller: _controller,
       onSubmitted: (newValue) {
         _handleSubmitted(newValue);
@@ -379,8 +385,8 @@ class RandomWordsState extends State<RandomWords> {
       },
       focusNode: _focusNode,
       keyboardType: TextInputType.text,
-      autofocus: true,
-      decoration: InputDecoration(),
+//      autofocus: true,
+//      decoration: InputDecoration(),
     );
 
     /*
@@ -404,7 +410,6 @@ class RandomWordsState extends State<RandomWords> {
         _buildGrid(),
         _textField,
 //        _cupertinoTextField,
-        input,
       ],
     );
 
@@ -438,7 +443,7 @@ class RandomWordsState extends State<RandomWords> {
             width: double.infinity,
             height: double.infinity,
             child: Text(
-              "Loading...",
+              "Welcome!",
             ))),
       );
     }
