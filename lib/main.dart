@@ -336,7 +336,7 @@ class RandomWordsState extends State<RandomWords> {
     );
 
     _launchURL() async {
-      const url = 'https://velosmobile.com';
+      const url = 'http://www.lexencrypt.com/solved';
       if (await canLaunch(url)) {
         await launch(url);
       } else {
@@ -576,11 +576,9 @@ Post-launch:
 * Change background colors
 
 Profiling:
-* As of 6/13, the web version starts at ~33% CPU, then spikes to ~100%.
-* Android emulator by itself (running nothing) is between 10-30% CPU.
-* Android emulator running in debug mode hovers around 100%, with spikes up to 200%.
+* As of 6/13/2020, the web version starts at ~33% CPU, then spikes to ~100%.
 
 Bugs:
-* As of 6/14/2020, autofocus does not work on profile or release builds.
+* As of 6/14/2020, autofocus does not work on profile or release builds. Working around this by requiring manual focus.
 
 */
