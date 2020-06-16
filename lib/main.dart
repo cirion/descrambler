@@ -219,13 +219,13 @@ class RandomWordsState extends State<RandomWords> {
       final glyphWidth = txtSize.width;
       final glyphHeight = txtSize.height;
 
-      print("txtSize after layout is $glyphWidth x $glyphHeight");
+//      print("txtSize after layout is $glyphWidth x $glyphHeight");
 
       _rowCount = (_getWindowHeight() ~/ glyphHeight);
 
       _columnCount = _getWindowWidth() ~/ glyphWidth;
 
-      print("Got $_rowCount rows and $_columnCount columns.");
+//      print("Got $_rowCount rows and $_columnCount columns.");
 
       _generateSecretWord();
     });
@@ -249,7 +249,6 @@ class RandomWordsState extends State<RandomWords> {
     WidgetsBinding.instance.addPostFrameCallback(_afterLayout);
 
     _focusNode.addListener(() {
-      print("Has focus? ${_focusNode.hasFocus}");
       if (_rowCount == null) {
         _initBoard();
       }
@@ -316,7 +315,7 @@ class RandomWordsState extends State<RandomWords> {
       duration: _fadeDuration,
       child: Center(
           child: Text(
-        "What is the word?",
+              (_rowCount == null) ? "" : "What is the word?",
             style: _feedbackStyle,
       )),
     );
@@ -442,9 +441,9 @@ class RandomWordsState extends State<RandomWords> {
         child: Container(
             width: double.infinity,
             height: double.infinity,
-            child: Text(
+            child: Center(child: Text(
               "Welcome!",
-            ))),
+            )))),
       );
     }
     final rowCount = _grid.length;
