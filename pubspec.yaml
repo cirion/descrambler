@@ -34,6 +34,7 @@ dependencies:
   random_string: ^1.1.0
   url_launcher: ^5.4.10
   rxdart: ^0.24.1
+  virtual_keyboard: ^0.1.4
 
 dev_dependencies:
   flutter_test:

@@ -15,6 +15,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:random_string/random_string.dart';
 import 'package:rxdart/subjects.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:virtual_keyboard/virtual_keyboard.dart';
 
 void main() => runApp(MyApp());
 
@@ -72,7 +73,6 @@ class RandomWordsState extends State<RandomWords> {
   int _columnCount;
   int _rowCount;
   GlobalKey _globalKey = GlobalKey();
-  String _inputWord = "";
   int _rotationIntervalMillis = 100;
   Timer _timer;
   int _victories = 0;
@@ -128,14 +128,12 @@ class RandomWordsState extends State<RandomWords> {
   }
 
   _generateColor() {
-    final index =
-        min(_random.nextInt(_victories ~/ 2 + 1), _fonts.length - 1);
+    final index = min(_random.nextInt(_victories ~/ 2 + 1), _fonts.length - 1);
     return _fonts[index];
   }
 
   _generateStartingColor() {
-    final index =
-        min(_random.nextInt(_victories ~/ 4 + 1), _fonts.length - 1);
+    final index = min(_random.nextInt(_victories ~/ 4 + 1), _fonts.length - 1);
     return _fonts[index];
   }
 
@@ -254,34 +252,61 @@ class RandomWordsState extends State<RandomWords> {
 
   var _controller = TextEditingController();
 
+  // Just local variable. Use Text widget or similar to show in UI.
+  String staticKeyboardText = "";
+  bool shiftEnabled = false;
+
+  /// Fired when the virtual keyboard key is pressed.
+  _onKeyPress(VirtualKeyboardKey key) {
+    if (key.keyType == VirtualKeyboardKeyType.String) {
+      staticKeyboardText = staticKeyboardText + (shiftEnabled ? key.capsText : key.text);
+    } else if (key.keyType == VirtualKeyboardKeyType.Action) {
+      switch (key.action) {
+        case VirtualKeyboardKeyAction.Backspace:
+          if (staticKeyboardText.length == 0) return;
+          staticKeyboardText = staticKeyboardText.substring(0, staticKeyboardText.length - 1);
+          break;
+        case VirtualKeyboardKeyAction.Return:
+          _handleSubmitted(staticKeyboardText);
+          staticKeyboardText = "";
+          break;
+        case VirtualKeyboardKeyAction.Space:
+          staticKeyboardText = staticKeyboardText + key.text;
+          break;
+        case VirtualKeyboardKeyAction.Shift:
+          shiftEnabled = !shiftEnabled;
+          break;
+        default:
+      }
+    }
+    setState(() {
+
+    });
+  }
+
+  void _handleSubmitted(String value) {
+    if (value.trim().toLowerCase() == _secretWord.toLowerCase()) {
+      setState(() {
+        _guess = Guess.correct;
+        _victories = _victories + 1;
+        _delaysBetweenReveals = Duration(
+            seconds: _delaysBetweenReveals.inSeconds +
+                _extraDelayPerMatch.inSeconds);
+      });
+      _generateSecretWord();
+    } else {
+      setState(() {
+        _guess = Guess.incorrect;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final appBar = AppBar(
       title: Text('Lexencrypt'),
       backgroundColor: Colors.lightGreen,
     );
-
-    final input = Text(
-      _inputWord,
-      style: _monoFont,
-    );
-
-    void _handleSubmitted(String value) {
-      if (value.trim().toLowerCase() == _secretWord.toLowerCase()) {
-        setState(() {
-          _guess = Guess.correct;
-          _victories = _victories + 1;
-          _delaysBetweenReveals = Duration(
-              seconds: _delaysBetweenReveals.inSeconds +
-                  _extraDelayPerMatch.inSeconds);
-        });
-        _generateSecretWord();
-      } else {
-        setState(() {
-          _guess = Guess.incorrect;
-        });
-      }
-    }
 
     final incorrectOpacity = AnimatedOpacity(
       // If the widget is visible, animate to 0.0 (invisible).
@@ -291,7 +316,7 @@ class RandomWordsState extends State<RandomWords> {
       child: Center(
           child: Text(
         "That's not it...",
-            style: _feedbackStyle,
+        style: _feedbackStyle,
       )),
     );
 
@@ -303,7 +328,7 @@ class RandomWordsState extends State<RandomWords> {
       child: Center(
           child: Text(
         "That's right!",
-            style: _feedbackStyle,
+        style: _feedbackStyle,
       )),
     );
 
@@ -315,24 +340,21 @@ class RandomWordsState extends State<RandomWords> {
       child: Center(
           child: Text(
         "What is the word?",
-            style: _feedbackStyle,
+        style: _feedbackStyle,
       )),
     );
 
     final solved = Align(
         alignment: Alignment.centerLeft,
-        child:
-        Padding(
+        child: Padding(
             padding: EdgeInsets.all(8.0),
-
             child: Text(
               " Solved $_victories",
               textAlign: TextAlign.start,
               style: _feedbackStyle,
-            )
-        )
-    //)
-    );
+            ))
+        //)
+        );
 
     _launchURL() async {
       const url = 'https://velosmobile.com';
@@ -348,7 +370,7 @@ class RandomWordsState extends State<RandomWords> {
         // TODO: Cupertino button here?
         child: FlatButton(
           onPressed: _launchURL,
-          child: Text("The Hunt Continues..."),
+          child: Text("More..."),
         ));
 
     final stack = Stack(
@@ -360,9 +382,8 @@ class RandomWordsState extends State<RandomWords> {
       ],
     );
 
-    // TODO: Testing style.
-    //if (_victories > 0) stack.children.add(solved);
-    if (true) stack.children.add(solved);
+    if (_victories > 0) stack.children.add(solved);
+    //if (true) stack.children.add(solved);
     if (_victories > 1) stack.children.add(victory);
 
     final topContainer = Container(
@@ -370,6 +391,36 @@ class RandomWordsState extends State<RandomWords> {
       color: Colors.blue,
       height: 40,
     );
+
+    // Using a static keyboard for now to work around an issue with the native
+    // keyboard not auto-displaying.
+
+    final input = Padding(
+      padding: EdgeInsets.only(bottom: 8.0),
+      child: Text(
+      staticKeyboardText,
+      style: _monoFont,
+      )
+    );
+
+    final keyboard = Container(
+      // Keyboard is transparent
+      color: Colors.black87,
+      child: VirtualKeyboard(
+        // Default height is 300
+          height: 350,
+          // Default is black
+          textColor: Colors.white,
+          // Default 14
+          fontSize: 20,
+          // [A-Z, 0-9]
+          type: VirtualKeyboardType.Alphanumeric,
+          // Callback for key press event
+          onKeyPress: _onKeyPress),
+    );
+
+
+    /*
 
     final _textField = TextField(
       controller: _controller,
@@ -382,6 +433,8 @@ class RandomWordsState extends State<RandomWords> {
       autofocus: true,
       decoration: InputDecoration(),
     );
+
+     */
 
     /*
     final _cupertinoTextField = CupertinoTextField(
@@ -402,9 +455,10 @@ class RandomWordsState extends State<RandomWords> {
       children: <Widget>[
         topContainer,
         _buildGrid(),
-        _textField,
-//        _cupertinoTextField,
         input,
+        keyboard,
+//        _textField,
+//        _cupertinoTextField,
       ],
     );
 
@@ -431,15 +485,14 @@ class RandomWordsState extends State<RandomWords> {
     if (_columnCount == null) {
       return Expanded(
         key: _globalKey,
-        child:
-        Padding(
-          padding: EdgeInsets.all(8.0),
-        child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            child: Text(
-              "Loading...",
-            ))),
+        child: Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                child: Text(
+                  "Loading...",
+                ))),
       );
     }
     final rowCount = _grid.length;
@@ -573,10 +626,8 @@ Post-launch:
 
 Profiling:
 * As of 6/13, the web version starts at ~33% CPU, then spikes to ~100%.
-* Android emulator by itself (running nothing) is between 10-30% CPU.
-* Android emulator running in debug mode hovers around 100%, with spikes up to 200%.
 
 Bugs:
-* As of 6/14/2020, autofocus does not work on profile or release builds.
+* As of 6/14/2020, autofocus does not work on Android profile or release builds. See https://github.com/flutter/flutter/issues/59439
 
 */
