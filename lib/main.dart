@@ -25,8 +25,8 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    //return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
-    return MaterialApp(title: 'Lexencrypt', home: RandomWords());
+    return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
+    //return MaterialApp(title: 'Lexencrypt', home: RandomWords());
   }
 }
 
@@ -162,6 +162,8 @@ class RandomWordsState extends State<RandomWords> {
         .toList()
         .where((element) => element.length >= 6 && element.length <= 12));
 
+    print("New secret word is $_secretWord");
+
     final secretWordLength = _secretWord.length;
 
     _grid = new List(_rowCount);
@@ -214,7 +216,7 @@ class RandomWordsState extends State<RandomWords> {
   }
 
   _initBoard() {
-    Future.delayed(const Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       final Size txtSize = _textSize("M", _monoFont);
       final glyphWidth = txtSize.width;
       final glyphHeight = txtSize.height;
@@ -347,10 +349,18 @@ class RandomWordsState extends State<RandomWords> {
     final victory = Align(
         alignment: Alignment.centerRight,
         // TODO: Cupertino button here?
+        child: CupertinoButton(
+          onPressed: _launchURL,
+          child: Text("More..."),
+        ),
+        /*
         child: FlatButton(
           onPressed: _launchURL,
           child: Text("More..."),
-        ));
+        )
+
+         */
+    );
 
     final stack = Stack(
       alignment: Alignment.center,
@@ -370,6 +380,8 @@ class RandomWordsState extends State<RandomWords> {
       height: 40,
     );
 
+
+    /*
     final decoration = InputDecoration(
       border: OutlineInputBorder(),
       labelText: (_rowCount == null) ? 'Tap to start' : null,
@@ -388,7 +400,10 @@ class RandomWordsState extends State<RandomWords> {
 //      decoration: InputDecoration(),
     );
 
+     */
+
     /*
+     */
     final _cupertinoTextField = CupertinoTextField(
       controller: _controller,
       onSubmitted: (newValue) {
@@ -400,19 +415,17 @@ class RandomWordsState extends State<RandomWords> {
       autofocus: true,
     );
 
-     */
 
     final children = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         topContainer,
         _buildGrid(),
-        _textField,
-//        _cupertinoTextField,
+        _cupertinoTextField,
+//        _textField,
       ],
     );
 
-    /*
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         backgroundColor: CupertinoColors.activeGreen,
@@ -421,14 +434,18 @@ class RandomWordsState extends State<RandomWords> {
       child: children,
     );
 
+    /*
      */
 
     //_focusNode.requestFocus();
 
+    /*
     return Scaffold(
       appBar: appBar,
       body: children,
     );
+
+     */
   }
 
   Widget _buildGrid() {
