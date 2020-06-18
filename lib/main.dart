@@ -214,7 +214,7 @@ class RandomWordsState extends State<RandomWords> {
   }
 
   _initBoard() {
-    Future.delayed(const Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       final Size txtSize = _textSize("M", _monoFont);
       final glyphWidth = txtSize.width;
       final glyphHeight = txtSize.height;
