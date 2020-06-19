@@ -344,12 +344,13 @@ class RandomWordsState extends State<RandomWords> {
     final victory = Align(
         alignment: Alignment.centerRight,
         child: Padding(
-          padding: EdgeInsets.only(right:8.0),
+          padding: EdgeInsets.only(right: 8.0),
           child: CupertinoButton(
             padding: EdgeInsets.all(0.0),
             onPressed: _launchURL,
             child: Padding(
-              padding: EdgeInsets.only(left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
+              padding:
+                  EdgeInsets.only(left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
               child: Text("More...",
                   style: TextStyle(
                     color: Colors.black,
@@ -375,8 +376,7 @@ class RandomWordsState extends State<RandomWords> {
     );
 
     if (_victories > 0) stack.children.add(solved);
-    // TODO: Temp, testing.
-    if (_victories > -1) stack.children.add(victory);
+    if (_victories > 2) stack.children.add(victory);
 
     final topContainer = Container(
       child: (_rowCount == 0) ? null : stack,
@@ -405,21 +405,25 @@ class RandomWordsState extends State<RandomWords> {
 
      */
 
-    final _cupertinoTextField = CupertinoTextField(
-      style: TextStyle(
-        color: Colors.black,
-      ),
-      placeholder: "What is it?",
-      controller: _controller,
-      padding: EdgeInsets.all(8.0),
-      onSubmitted: (newValue) {
-        _handleSubmitted(newValue);
-        _controller.clear();
-      },
-      focusNode: _focusNode,
-      keyboardType: TextInputType.text,
-      autofocus: true,
-    );
+    final _cupertinoTextField = Theme(
+        data: Theme.of(context).copyWith(splashColor: Colors.transparent),
+        child: CupertinoTextField(
+          clearButtonMode: OverlayVisibilityMode.editing,
+          style: TextStyle(
+            backgroundColor: Colors.transparent,
+            color: Colors.black,
+          ),
+          placeholder: "What is it?",
+          controller: _controller,
+          padding: EdgeInsets.all(8.0),
+          onSubmitted: (newValue) {
+            _handleSubmitted(newValue);
+            _controller.clear();
+          },
+          focusNode: _focusNode,
+          keyboardType: TextInputType.text,
+          autofocus: true,
+        ));
 
     final children = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
