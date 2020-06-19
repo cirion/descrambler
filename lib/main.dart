@@ -162,7 +162,7 @@ class RandomWordsState extends State<RandomWords> {
         .toList()
         .where((element) => element.length >= 6 && element.length <= 12));
 
-    print("New secret word is $_secretWord");
+//    print("New secret word is $_secretWord");
 
     final secretWordLength = _secretWord.length;
 
@@ -348,10 +348,18 @@ class RandomWordsState extends State<RandomWords> {
 
     final victory = Align(
         alignment: Alignment.centerRight,
-        // TODO: Cupertino button here?
-        child: CupertinoButton(
+        child: Padding(
+          padding: EdgeInsets.all(0.0),
+          child: CupertinoButton(
+          padding: EdgeInsets.all(0.0),
+          color: Colors.lightGreen,
           onPressed: _launchURL,
-          child: Text("More..."),
+          child: Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text("More...",
+          style: TextStyle(
+            color: Colors.red,
+          )),),
         ),
         /*
         child: FlatButton(
@@ -360,7 +368,7 @@ class RandomWordsState extends State<RandomWords> {
         )
 
          */
-    );
+    ));
 
     final stack = Stack(
       alignment: Alignment.center,
@@ -372,7 +380,8 @@ class RandomWordsState extends State<RandomWords> {
     );
 
     if (_victories > 0) stack.children.add(solved);
-    if (_victories > 2) stack.children.add(victory);
+    // TODO: Temp, testing.
+    if (_victories > -1) stack.children.add(victory);
 
     final topContainer = Container(
       child: (_rowCount == 0) ? null : stack,
@@ -402,10 +411,14 @@ class RandomWordsState extends State<RandomWords> {
 
      */
 
-    /*
-     */
-    final _cupertinoTextField = CupertinoTextField(
+    final _cupertinoTextField =
+    CupertinoTextField(
+      style: TextStyle(
+        color: Colors.black,
+      ),
+      decoration: null,
       controller: _controller,
+      padding: EdgeInsets.all(8.0),
       onSubmitted: (newValue) {
         _handleSubmitted(newValue);
         _controller.clear();
@@ -414,7 +427,6 @@ class RandomWordsState extends State<RandomWords> {
       keyboardType: TextInputType.text,
       autofocus: true,
     );
-
 
     final children = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -427,6 +439,7 @@ class RandomWordsState extends State<RandomWords> {
     );
 
     return CupertinoPageScaffold(
+      backgroundColor: Colors.white,
       navigationBar: CupertinoNavigationBar(
         backgroundColor: CupertinoColors.activeGreen,
         middle: Text("Lexencrypt"),
