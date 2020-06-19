@@ -127,14 +127,12 @@ class RandomWordsState extends State<RandomWords> {
   }
 
   _generateColor() {
-    final index =
-        min(_random.nextInt(_victories ~/ 2 + 1), _fonts.length - 1);
+    final index = min(_random.nextInt(_victories ~/ 2 + 1), _fonts.length - 1);
     return _fonts[index];
   }
 
   _generateStartingColor() {
-    final index =
-        min(_random.nextInt(_victories ~/ 4 + 1), _fonts.length - 1);
+    final index = min(_random.nextInt(_victories ~/ 4 + 1), _fonts.length - 1);
     return _fonts[index];
   }
 
@@ -294,7 +292,7 @@ class RandomWordsState extends State<RandomWords> {
       child: Center(
           child: Text(
         "That's not it...",
-            style: _feedbackStyle,
+        style: _feedbackStyle,
       )),
     );
 
@@ -306,7 +304,7 @@ class RandomWordsState extends State<RandomWords> {
       child: Center(
           child: Text(
         "That's right!",
-            style: _feedbackStyle,
+        style: _feedbackStyle,
       )),
     );
 
@@ -317,25 +315,22 @@ class RandomWordsState extends State<RandomWords> {
       duration: _fadeDuration,
       child: Center(
           child: Text(
-              (_rowCount == null) ? "" : "What is the word?",
-            style: _feedbackStyle,
+        (_rowCount == null) ? "" : "Can you crack the code?",
+        style: _feedbackStyle,
       )),
     );
 
     final solved = Align(
         alignment: Alignment.centerLeft,
-        child:
-        Padding(
+        child: Padding(
             padding: EdgeInsets.all(8.0),
-
             child: Text(
               " Solved $_victories",
               textAlign: TextAlign.start,
               style: _feedbackStyle,
-            )
-        )
-    //)
-    );
+            ))
+        //)
+        );
 
     _launchURL() async {
       const url = 'http://www.lexencrypt.com/solved';
@@ -349,26 +344,26 @@ class RandomWordsState extends State<RandomWords> {
     final victory = Align(
         alignment: Alignment.centerRight,
         child: Padding(
-          padding: EdgeInsets.all(0.0),
+          padding: EdgeInsets.only(right:8.0),
           child: CupertinoButton(
-          padding: EdgeInsets.all(0.0),
-          color: Colors.lightGreen,
-          onPressed: _launchURL,
-          child: Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text("More...",
-          style: TextStyle(
-            color: Colors.red,
-          )),),
-        ),
-        /*
+            padding: EdgeInsets.all(0.0),
+            onPressed: _launchURL,
+            child: Padding(
+              padding: EdgeInsets.only(left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
+              child: Text("More...",
+                  style: TextStyle(
+                    color: Colors.black,
+                  )),
+            ),
+          ),
+          /*
         child: FlatButton(
           onPressed: _launchURL,
           child: Text("More..."),
         )
 
          */
-    ));
+        ));
 
     final stack = Stack(
       alignment: Alignment.center,
@@ -388,7 +383,6 @@ class RandomWordsState extends State<RandomWords> {
       color: Colors.blue,
       height: 40,
     );
-
 
     /*
     final decoration = InputDecoration(
@@ -411,12 +405,11 @@ class RandomWordsState extends State<RandomWords> {
 
      */
 
-    final _cupertinoTextField =
-    CupertinoTextField(
+    final _cupertinoTextField = CupertinoTextField(
       style: TextStyle(
         color: Colors.black,
       ),
-      decoration: null,
+      placeholder: "What is it?",
       controller: _controller,
       padding: EdgeInsets.all(8.0),
       onSubmitted: (newValue) {
@@ -465,15 +458,15 @@ class RandomWordsState extends State<RandomWords> {
     if (_columnCount == null) {
       return Expanded(
         key: _globalKey,
-        child:
-        Padding(
-          padding: EdgeInsets.all(8.0),
-        child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            child: Center(child: Text(
-              "Welcome!",
-            )))),
+        child: Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                child: Center(
+                    child: Text(
+                  "Welcome!",
+                )))),
       );
     }
     final rowCount = _grid.length;
