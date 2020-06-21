@@ -460,7 +460,7 @@ class RandomWordsState extends State<RandomWords> {
             backgroundColor: Colors.transparent,
             color: Colors.black,
           ),
-          placeholder: "What is it?",
+          placeholder: (_rowCount == null) ? "Tap to start" : "What is it?",
           controller: _controller,
           padding: EdgeInsets.all(8.0),
           onSubmitted: (newValue) {
@@ -469,7 +469,7 @@ class RandomWordsState extends State<RandomWords> {
           },
           focusNode: _focusNode,
           keyboardType: TextInputType.text,
-          autofocus: true,
+//          autofocus: true,
         ));
 
     final children = Column(
