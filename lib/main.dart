@@ -335,7 +335,7 @@ class RandomWordsState extends State<RandomWords> {
         //)
         );
 
-    _launchURL() async {
+    _launchSolved() async {
       const url = 'http://www.lexencrypt.com/solved';
       if (await canLaunch(url)) {
         await launch(url);
@@ -344,13 +344,20 @@ class RandomWordsState extends State<RandomWords> {
       }
     }
 
-    final victory = Align(
-        alignment: Alignment.centerRight,
-        child: Padding(
+    _launchPrivacy() async {
+      const url = 'http://www.lexencrypt.com/privacy';
+      if (await canLaunch(url)) {
+        await launch(url);
+      } else {
+        throw 'Could not launch $url';
+      }
+    }
+
+   final victory = Padding(
           padding: EdgeInsets.only(right: 8.0),
           child: CupertinoButton(
             padding: EdgeInsets.all(0.0),
-            onPressed: _launchURL,
+            onPressed: _launchSolved,
             child: Padding(
               padding:
                   EdgeInsets.only(left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
@@ -367,7 +374,44 @@ class RandomWordsState extends State<RandomWords> {
         )
 
          */
-        ));
+        );
+
+    final privacy = Padding(
+          padding: EdgeInsets.only(right: 0.0),
+          child: CupertinoButton(
+            padding: EdgeInsets.all(0.0),
+            onPressed: _launchPrivacy,
+            child: Padding(
+              padding:
+              EdgeInsets.only(bottom: 0.0),
+              child: Text("Privacy",
+                  style: TextStyle(
+                    color: Colors.black,
+                  )),
+            ),
+          ),
+          /*
+        child: FlatButton(
+          onPressed: _launchURL,
+          child: Text("More..."),
+        )
+
+         */
+        );
+
+    final buttons = Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: <Widget>[],
+//      children: <Widget>[privacy],
+    );
+
+    if (_victories > 2) buttons.children.add(victory);
+
+    final buttonsContainer = Align(
+        alignment: Alignment.centerRight,
+        child: buttons,
+    );
 
     final stack = Stack(
       alignment: Alignment.center,
@@ -375,11 +419,11 @@ class RandomWordsState extends State<RandomWords> {
         incorrectOpacity,
         correctOpacity,
         noneOpacity,
+        buttonsContainer,
       ],
     );
 
     if (_victories > 0) stack.children.add(solved);
-    if (_victories > 2) stack.children.add(victory);
 
     final topContainer = Container(
       child: (_rowCount == 0) ? null : stack,
@@ -443,6 +487,7 @@ class RandomWordsState extends State<RandomWords> {
       navigationBar: CupertinoNavigationBar(
         backgroundColor: CupertinoColors.activeGreen,
         middle: Text("Lexencrypt"),
+        trailing: privacy,
       ),
       child: children,
     );
