@@ -165,7 +165,7 @@ class RandomWordsState extends State<RandomWords> {
     final newX = _random.nextInt(_columnCount - secretWordLength);
     final newY = _random.nextInt(_rowCount);
 
-    print("New secret word is $_secretWord at $newX / $newY");
+//    print("New secret word is $_secretWord at $newX / $newY");
 
     _grid = new List(_rowCount);
     for (int i = 0; i < _rowCount; ++i) {
@@ -317,8 +317,7 @@ class RandomWordsState extends State<RandomWords> {
       opacity: _guess == Guess.none ? 1.0 : 0.0,
       duration: _fadeDuration,
       child: Center(
-          child: Text(
-        (_rowCount == null) ? "" : "Can you crack the code?",
+          child: Text("Can you crack the code?",
         style: _feedbackStyle,
       )),
     );
@@ -426,7 +425,7 @@ class RandomWordsState extends State<RandomWords> {
     if (_victories > 0) stack.children.add(solved);
 
     final topContainer = Container(
-      child: (_rowCount == 0) ? null : stack,
+      child: stack,
       color: Colors.blue,
       height: 40,
     );
