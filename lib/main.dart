@@ -160,9 +160,12 @@ class RandomWordsState extends State<RandomWords> {
         .toList()
         .where((element) => element.length >= 6 && element.length <= 12));
 
-//    print("New secret word is $_secretWord");
-
     final secretWordLength = _secretWord.length;
+
+    final newX = _random.nextInt(_columnCount - secretWordLength);
+    final newY = _random.nextInt(_rowCount);
+
+    print("New secret word is $_secretWord at $newX / $newY");
 
     _grid = new List(_rowCount);
     for (int i = 0; i < _rowCount; ++i) {
@@ -174,8 +177,8 @@ class RandomWordsState extends State<RandomWords> {
     }
 
     setState(() {
-      _secretWordX = _random.nextInt(_columnCount - secretWordLength);
-      _secretWordY = _random.nextInt(_rowCount);
+      _secretWordX = newX;
+      _secretWordY = newY;
       _nextRevealTime = DateTime.now().add(_delaysBetweenReveals);
     });
     _timer?.cancel();
