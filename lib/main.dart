@@ -336,7 +336,7 @@ class RandomWordsState extends State<RandomWords> {
         );
 
     _launchSolved() async {
-      const url = 'http://www.lexencrypt.com/solved';
+      const url = 'https://www.lexencrypt.com/solved';
       if (await canLaunch(url)) {
         await launch(url);
       } else {
@@ -345,7 +345,7 @@ class RandomWordsState extends State<RandomWords> {
     }
 
     _launchPrivacy() async {
-      const url = 'http://www.lexencrypt.com/privacy';
+      const url = 'https://www.lexencrypt.com/privacy';
       if (await canLaunch(url)) {
         await launch(url);
       } else {
