@@ -15,6 +15,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:random_string/random_string.dart';
 import 'package:rxdart/subjects.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:audioplayers/audio_cache.dart';
 
 void main() => runApp(MyApp());
 
@@ -25,12 +26,14 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
+    player.loadAll(["ding.mp3"]);
     //return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
     return MaterialApp(title: 'Lexencrypt', home: RandomWords());
   }
 }
 
 final _gridStreamSubject = PublishSubject<List<List<Box>>>();
+
 Stream<List<List<Box>>> get _gridStream => _gridStreamSubject.stream;
 
 final _gray1Font = GoogleFonts.robotoMono(
@@ -44,6 +47,7 @@ class Box {
   String character;
   TextStyle style;
   int hits;
+
   Box(this.character, this.style, this.hits);
 
   Box clone() {
@@ -60,6 +64,9 @@ class Box {
     return character.hashCode + style.toStringShort().hashCode;
   }
 }
+
+AudioCache player = new AudioCache();
+final dingAudioPath = "ding.mp3";
 
 class RandomWordsState extends State<RandomWords> {
   static final _monoFont = GoogleFonts.robotoMono(
@@ -127,14 +134,12 @@ class RandomWordsState extends State<RandomWords> {
   }
 
   _generateColor() {
-    final index =
-        min(_random.nextInt(_victories ~/ 2 + 1), _fonts.length - 1);
+    final index = min(_random.nextInt(_victories ~/ 2 + 1), _fonts.length - 1);
     return _fonts[index];
   }
 
   _generateStartingColor() {
-    final index =
-        min(_random.nextInt(_victories ~/ 4 + 1), _fonts.length - 1);
+    final index = min(_random.nextInt(_victories ~/ 4 + 1), _fonts.length - 1);
     return _fonts[index];
   }
 
@@ -269,6 +274,7 @@ class RandomWordsState extends State<RandomWords> {
 
     void _handleSubmitted(String value) {
       if (value.trim().toLowerCase() == _secretWord.toLowerCase()) {
+        player.play(dingAudioPath);
         setState(() {
           _guess = Guess.correct;
           _victories = _victories + 1;
@@ -292,7 +298,7 @@ class RandomWordsState extends State<RandomWords> {
       child: Center(
           child: Text(
         "That's not it...",
-            style: _feedbackStyle,
+        style: _feedbackStyle,
       )),
     );
 
@@ -304,7 +310,7 @@ class RandomWordsState extends State<RandomWords> {
       child: Center(
           child: Text(
         "That's right!",
-            style: _feedbackStyle,
+        style: _feedbackStyle,
       )),
     );
 
@@ -315,25 +321,22 @@ class RandomWordsState extends State<RandomWords> {
       duration: _fadeDuration,
       child: Center(
           child: Text(
-              (_rowCount == null) ? "" : "What is the word?",
-            style: _feedbackStyle,
+        (_rowCount == null) ? "" : "What is the word?",
+        style: _feedbackStyle,
       )),
     );
 
     final solved = Align(
         alignment: Alignment.centerLeft,
-        child:
-        Padding(
+        child: Padding(
             padding: EdgeInsets.all(8.0),
-
             child: Text(
               " Solved $_victories",
               textAlign: TextAlign.start,
               style: _feedbackStyle,
-            )
-        )
-    //)
-    );
+            ))
+        //)
+        );
 
     _launchURL() async {
       const url = 'http://www.lexencrypt.com/solved';
@@ -435,15 +438,15 @@ class RandomWordsState extends State<RandomWords> {
     if (_columnCount == null) {
       return Expanded(
         key: _globalKey,
-        child:
-        Padding(
-          padding: EdgeInsets.all(8.0),
-        child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            child: Center(child: Text(
-              "Welcome!",
-            )))),
+        child: Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                child: Center(
+                    child: Text(
+                  "Welcome!",
+                )))),
       );
     }
     final rowCount = _grid.length;
@@ -574,9 +577,7 @@ Post-launch:
 * Button to restart
 * Music
 * Change background colors
-
-Profiling:
-* As of 6/13/2020, the web version starts at ~33% CPU, then spikes to ~100%.
+* Remove "More..." button
 
 Bugs:
 * As of 6/14/2020, autofocus does not work on profile or release builds. Working around this by requiring manual focus.
