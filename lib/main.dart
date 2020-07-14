@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    player.loadAll(["ding.mp3"]);
+    player.loadAll(["ding.mp3", "wrong.wav"]);
     //return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
     return MaterialApp(title: 'Lexencrypt', home: RandomWords());
   }
@@ -67,6 +67,7 @@ class Box {
 
 AudioCache player = new AudioCache();
 final dingAudioPath = "ding.mp3";
+final wrongAudioPath = "wrong.wav";
 
 class RandomWordsState extends State<RandomWords> {
   static final _monoFont = GoogleFonts.robotoMono(
@@ -284,6 +285,7 @@ class RandomWordsState extends State<RandomWords> {
         });
         _generateSecretWord();
       } else {
+        player.play(wrongAudioPath);
         setState(() {
           _guess = Guess.incorrect;
         });
