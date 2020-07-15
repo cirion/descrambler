@@ -11,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:random_string/random_string.dart';
 import 'package:rxdart/subjects.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,7 +29,11 @@ class MyApp extends StatelessWidget {
     musicPlayer.loadAll([musicAudioPath]);
     musicPlayer.play(musicAudioPath);
     //return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
-    return MaterialApp(title: 'Lexencrypt', home: RandomWords());
+    return MaterialApp(
+        title: 'Lexencrypt',
+        //theme: ThemeData(fontFamily: "RobotoMono"),
+        home: RandomWords(),
+    );
   }
 }
 
@@ -38,7 +41,8 @@ final _gridStreamSubject = PublishSubject<List<List<Box>>>();
 
 Stream<List<List<Box>>> get _gridStream => _gridStreamSubject.stream;
 
-final _gray1Font = GoogleFonts.robotoMono(
+final _gray1Font = TextStyle(
+    fontFamily: 'RobotoMono',
     fontSize: 18.0,
     fontFeatures: [FontFeature.tabularFigures()],
     color: Colors.black12);
@@ -75,7 +79,8 @@ AudioCache musicPlayer = new AudioCache();
 final musicAudioPath = "kai_engel_09_homeroad.mp3";
 
 class RandomWordsState extends State<RandomWords> {
-  static final _monoFont = GoogleFonts.robotoMono(
+  static final _monoFont = TextStyle(
+      fontFamily: 'RobotoMono',
       fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
   final _random = Random();
 
@@ -489,23 +494,28 @@ class RandomWordsState extends State<RandomWords> {
     );
   }
 
-  static final _gray2Font = GoogleFonts.robotoMono(
+  static final _gray2Font = TextStyle(
+      fontFamily: 'RobotoMono',
       fontSize: 18.0,
       fontFeatures: [FontFeature.tabularFigures()],
       color: Colors.black26);
-  static final _gray3Font = GoogleFonts.robotoMono(
+  static final _gray3Font = TextStyle(
+      fontFamily: 'RobotoMono',
       fontSize: 18.0,
       fontFeatures: [FontFeature.tabularFigures()],
       color: Colors.black38);
-  static final _gray4Font = GoogleFonts.robotoMono(
+  static final _gray4Font = TextStyle(
+      fontFamily: 'RobotoMono',
       fontSize: 18.0,
       fontFeatures: [FontFeature.tabularFigures()],
       color: Colors.black45);
-  static final _gray5Font = GoogleFonts.robotoMono(
+  static final _gray5Font = TextStyle(
+      fontFamily: 'RobotoMono',
       fontSize: 18.0,
       fontFeatures: [FontFeature.tabularFigures()],
       color: Colors.black54);
-  static final _gray6Font = GoogleFonts.robotoMono(
+  static final _gray6Font = TextStyle(
+      fontFamily: 'RobotoMono',
       fontSize: 18.0,
       fontFeatures: [FontFeature.tabularFigures()],
       color: Colors.black87);
@@ -518,7 +528,8 @@ class RandomWordsState extends State<RandomWords> {
     _gray2Font,
     _gray1Font,
   ];
-  final _hintFont = GoogleFonts.robotoMono(
+  final _hintFont = TextStyle(
+      fontFamily: 'RobotoMono',
       fontSize: 18.0,
       fontFeatures: [FontFeature.tabularFigures()],
       color: Colors.redAccent);
@@ -584,6 +595,10 @@ Post-launch:
 * Music
 * Change background colors
 * Remove "More..." button
+
+Thoughts on game progression:
+Now that state can be saved, I'd like to extend the "discoveries" a bit more.
+
 
 Bugs:
 * As of 6/14/2020, autofocus does not work on profile or release builds. Working around this by requiring manual focus.
