@@ -599,6 +599,36 @@ Post-launch:
 Thoughts on game progression:
 Now that state can be saved, I'd like to extend the "discoveries" a bit more.
 
+Items to vary could include:
+Initial fill characters
+Casing (lower, upper, mixed)
+Font colors (gray, much later do colors?)
+Backgrounds (maybe fade & stick per board for a while, then fade in-game?)
+Music
+
+Possible progression:
+1: *, lower case, black
+2: -, lower case, black
+3: -, upper case, black
+4: |, upper case, black
+5: /, upper case, black
+6-9: random chars to start, upper case, black
+10+: Mixed case
+15: 2 tones of characters.
+20: Music starts.
+25: 3 tones of characters.
+30: Solid background fades.
+35: 4 tones of characters.
+40: Pulsating backgrounds.
+45: 5 tones of characters.
+50: Multicolored fonts. (Hm, maybe tones should be alpha value instead of gray shades?)
+
+This is probably good for a version 1.1. Future enhancements could include:
+* Pictures in background.
+* Moving words in background.
+* Off-centered letter positions.
+* Vertical words (stretch goal! and beware of limited height on some screens)
+* Diagonal words (as above).
 
 Bugs:
 * As of 6/14/2020, autofocus does not work on profile or release builds. Working around this by requiring manual focus.
