@@ -26,7 +26,9 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    player.loadAll(["ding.mp3", "wrong.wav"]);
+    sfxPlayer.loadAll([dingAudioPath, wrongAudioPath]);
+    musicPlayer.loadAll([musicAudioPath]);
+    musicPlayer.play(musicAudioPath);
     //return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
     return MaterialApp(title: 'Lexencrypt', home: RandomWords());
   }
@@ -65,9 +67,12 @@ class Box {
   }
 }
 
-AudioCache player = new AudioCache();
+AudioCache sfxPlayer = new AudioCache();
 final dingAudioPath = "ding.mp3";
 final wrongAudioPath = "wrong.wav";
+
+AudioCache musicPlayer = new AudioCache();
+final musicAudioPath = "kai_engel_09_homeroad.mp3";
 
 class RandomWordsState extends State<RandomWords> {
   static final _monoFont = GoogleFonts.robotoMono(
@@ -275,7 +280,7 @@ class RandomWordsState extends State<RandomWords> {
 
     void _handleSubmitted(String value) {
       if (value.trim().toLowerCase() == _secretWord.toLowerCase()) {
-        player.play(dingAudioPath);
+        sfxPlayer.play(dingAudioPath);
         setState(() {
           _guess = Guess.correct;
           _victories = _victories + 1;
@@ -285,7 +290,7 @@ class RandomWordsState extends State<RandomWords> {
         });
         _generateSecretWord();
       } else {
-        player.play(wrongAudioPath);
+        sfxPlayer.play(wrongAudioPath);
         setState(() {
           _guess = Guess.incorrect;
         });
@@ -568,7 +573,6 @@ class StyledBox extends StatefulWidget {
 Release checklist:
 
 Stretch:
-* Sound effects on success/failure.
 * More feedback messages (especially failure). Test fade.
 * Bundle RobotoMono font into app assets and remove Internet permission.
 

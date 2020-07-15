@@ -54,6 +54,7 @@ flutter:
   assets:
     - assets/ding.mp3
     - assets/wrong.wav
+    - assets/kai_engel_09_homeroad.mp3
 
   # To add assets to your application, add an assets section, like this:
   # assets:
