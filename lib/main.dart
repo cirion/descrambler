@@ -13,6 +13,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:random_string/random_string.dart';
 import 'package:rxdart/subjects.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:audioplayers/audio_cache.dart';
 
@@ -272,6 +273,15 @@ class RandomWordsState extends State<RandomWords> {
         FocusScope.of(context).requestFocus(_focusNode);
       }
     });
+
+    _loadSave();
+  }
+
+  _loadSave() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _victories = (prefs.getInt('victories') ?? 0);
+    });
   }
 
   var _controller = TextEditingController();
@@ -283,9 +293,13 @@ class RandomWordsState extends State<RandomWords> {
       backgroundColor: Colors.lightGreen,
     );
 
-    void _handleSubmitted(String value) {
+    void _handleSubmitted(String value) async {
       if (value.trim().toLowerCase() == _secretWord.toLowerCase()) {
         sfxPlayer.play(dingAudioPath);
+
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setInt("victories", _victories + 1);
+
         setState(() {
           _guess = Guess.correct;
           _victories = _victories + 1;
@@ -293,6 +307,7 @@ class RandomWordsState extends State<RandomWords> {
               seconds: _delaysBetweenReveals.inSeconds +
                   _extraDelayPerMatch.inSeconds);
         });
+
         _generateSecretWord();
       } else {
         sfxPlayer.play(wrongAudioPath);
@@ -629,6 +644,18 @@ This is probably good for a version 1.1. Future enhancements could include:
 * Off-centered letter positions.
 * Vertical words (stretch goal! and beware of limited height on some screens)
 * Diagonal words (as above).
+
+Thoughts on UI:
+* Mute (toggle on/off).
+* Restart with confirmation
+* Stats (maybe an icon near Mute? )
+  * Total solves
+  * Fastest solve
+  * Longest correct streak
+  *
+
+TODO:
+* Gracefully shut down music while backgrounded and immediately after exiting.
 
 Bugs:
 * As of 6/14/2020, autofocus does not work on profile or release builds. Working around this by requiring manual focus.
