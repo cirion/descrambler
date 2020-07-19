@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:dart_random_choice/dart_random_choice.dart';
 import 'package:english_words/english_words.dart';
 import 'package:flutter/cupertino.dart';
@@ -11,10 +12,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:random_string/random_string.dart';
 import 'package:rxdart/subjects.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:audioplayers/audio_cache.dart';
 
 void main() => runApp(MyApp());
 
@@ -25,15 +28,26 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
+    sfxPlayer.loadAll([dingAudioPath, wrongAudioPath]);
+    musicPlayer.loadAll([musicAudioPath]);
+    final futureMusic = musicPlayer.play(musicAudioPath);
+    Future.wait(
+        [
+              () async { activeMusic = await futureMusic; } ()
+        ]
+    );
+
     return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
     //return MaterialApp(title: 'Lexencrypt', home: RandomWords());
   }
 }
 
 final _gridStreamSubject = PublishSubject<List<List<Box>>>();
+
 Stream<List<List<Box>>> get _gridStream => _gridStreamSubject.stream;
 
-final _gray1Font = GoogleFonts.robotoMono(
+final _gray1Font = TextStyle(
+    fontFamily: 'RobotoMono',
     fontSize: 18.0,
     fontFeatures: [FontFeature.tabularFigures()],
     color: Colors.black12);
@@ -44,6 +58,7 @@ class Box {
   String character;
   TextStyle style;
   int hits;
+
   Box(this.character, this.style, this.hits);
 
   Box clone() {
@@ -61,8 +76,17 @@ class Box {
   }
 }
 
-class RandomWordsState extends State<RandomWords> {
-  static final _monoFont = GoogleFonts.robotoMono(
+AudioCache sfxPlayer = new AudioCache();
+final dingAudioPath = "ding.mp3";
+final wrongAudioPath = "wrong.wav";
+
+AudioCache musicPlayer = new AudioCache();
+final musicAudioPath = "kai_engel_09_homeroad.mp3";
+AudioPlayer activeMusic;
+
+class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
+  static final _monoFont = TextStyle(
+      fontFamily: 'RobotoMono',
       fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
   final _random = Random();
 
@@ -80,6 +104,8 @@ class RandomWordsState extends State<RandomWords> {
   Duration _delaysBetweenReveals = Duration(seconds: 30);
   final Duration _extraDelayPerMatch = Duration(seconds: 30);
   DateTime _nextRevealTime;
+
+  bool muted = false;
 
   Guess _guess = Guess.none;
 
@@ -249,6 +275,8 @@ class RandomWordsState extends State<RandomWords> {
   void initState() {
     super.initState();
 
+    WidgetsBinding.instance.addObserver(this);
+
     WidgetsBinding.instance.addPostFrameCallback(_afterLayout);
 
     _focusNode.addListener(() {
@@ -258,6 +286,32 @@ class RandomWordsState extends State<RandomWords> {
       if (!_focusNode.hasFocus) {
         FocusScope.of(context).requestFocus(_focusNode);
       }
+    });
+
+    _loadSave();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      // TODO: Only if on a music-enabled stage.
+      activeMusic.pause();
+    } else {
+      activeMusic.resume();
+    }
+    //setState(() { _notification = state; });
+  }
+
+  _loadSave() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _victories = (prefs.getInt('victories') ?? 0);
     });
   }
 
@@ -270,8 +324,21 @@ class RandomWordsState extends State<RandomWords> {
       backgroundColor: Colors.lightGreen,
     );
 
-    void _handleSubmitted(String value) {
+    void _toggleAudio() async {
+      setState(() {
+        muted = !muted;
+      });
+    }
+
+    void _handleSubmitted(String value) async {
       if (value.trim().toLowerCase() == _secretWord.toLowerCase()) {
+        if (!muted) {
+          sfxPlayer.play(dingAudioPath);
+        }
+
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setInt("victories", _victories + 1);
+
         setState(() {
           _guess = Guess.correct;
           _victories = _victories + 1;
@@ -279,8 +346,12 @@ class RandomWordsState extends State<RandomWords> {
               seconds: _delaysBetweenReveals.inSeconds +
                   _extraDelayPerMatch.inSeconds);
         });
+
         _generateSecretWord();
       } else {
+        if (!muted) {
+          sfxPlayer.play(wrongAudioPath);
+        }
         setState(() {
           _guess = Guess.incorrect;
         });
@@ -317,7 +388,8 @@ class RandomWordsState extends State<RandomWords> {
       opacity: _guess == Guess.none ? 1.0 : 0.0,
       duration: _fadeDuration,
       child: Center(
-          child: Text("Can you crack the code?",
+          child: Text(
+        (_rowCount == null) ? "" : "What is the word?",
         style: _feedbackStyle,
       )),
     );
@@ -412,6 +484,29 @@ class RandomWordsState extends State<RandomWords> {
         child: buttons,
     );
 
+    final Widget mutedSvg = SvgPicture.asset("assets/music_off-white-24dp.svg");
+    final Widget unMutedSvg = SvgPicture.asset("assets/music_note-white-24dp.svg");
+    final audioImage = (muted) ? mutedSvg : unMutedSvg;
+
+    final muteButton = Align(
+      alignment: Alignment.centerRight,
+      child: AspectRatio(
+        aspectRatio: 1.0,
+          child: FlatButton(
+            onPressed: _toggleAudio,
+            padding: EdgeInsets.all(0.0),
+            child: audioImage,
+          )
+
+      )
+    );
+
+    if (muted) {
+      activeMusic?.setVolume(0.0);
+    } else {
+      activeMusic?.setVolume(1.0);
+    }
+
     final stack = Stack(
       alignment: Alignment.center,
       children: <Widget>[
@@ -423,6 +518,8 @@ class RandomWordsState extends State<RandomWords> {
     );
 
     if (_victories > 0) stack.children.add(solved);
+    //if (_victories > 2) stack.children.add(victory);
+    stack.children.add(muteButton);
 
     final topContainer = Container(
       child: stack,
@@ -553,23 +650,28 @@ class RandomWordsState extends State<RandomWords> {
     );
   }
 
-  static final _gray2Font = GoogleFonts.robotoMono(
+  static final _gray2Font = TextStyle(
+      fontFamily: 'RobotoMono',
       fontSize: 18.0,
       fontFeatures: [FontFeature.tabularFigures()],
       color: Colors.black26);
-  static final _gray3Font = GoogleFonts.robotoMono(
+  static final _gray3Font = TextStyle(
+      fontFamily: 'RobotoMono',
       fontSize: 18.0,
       fontFeatures: [FontFeature.tabularFigures()],
       color: Colors.black38);
-  static final _gray4Font = GoogleFonts.robotoMono(
+  static final _gray4Font = TextStyle(
+      fontFamily: 'RobotoMono',
       fontSize: 18.0,
       fontFeatures: [FontFeature.tabularFigures()],
       color: Colors.black45);
-  static final _gray5Font = GoogleFonts.robotoMono(
+  static final _gray5Font = TextStyle(
+      fontFamily: 'RobotoMono',
       fontSize: 18.0,
       fontFeatures: [FontFeature.tabularFigures()],
       color: Colors.black54);
-  static final _gray6Font = GoogleFonts.robotoMono(
+  static final _gray6Font = TextStyle(
+      fontFamily: 'RobotoMono',
       fontSize: 18.0,
       fontFeatures: [FontFeature.tabularFigures()],
       color: Colors.black87);
@@ -582,7 +684,8 @@ class RandomWordsState extends State<RandomWords> {
     _gray2Font,
     _gray1Font,
   ];
-  final _hintFont = GoogleFonts.robotoMono(
+  final _hintFont = TextStyle(
+      fontFamily: 'RobotoMono',
       fontSize: 18.0,
       fontFeatures: [FontFeature.tabularFigures()],
       color: Colors.redAccent);
@@ -637,7 +740,6 @@ class StyledBox extends StatefulWidget {
 Release checklist:
 
 Stretch:
-* Sound effects on success/failure.
 * More feedback messages (especially failure). Test fade.
 * Bundle RobotoMono font into app assets and remove Internet permission.
 
@@ -648,9 +750,50 @@ Post-launch:
 * Button to restart
 * Music
 * Change background colors
+* Remove "More..." button
 
-Profiling:
-* As of 6/13/2020, the web version starts at ~33% CPU, then spikes to ~100%.
+Thoughts on game progression:
+Now that state can be saved, I'd like to extend the "discoveries" a bit more.
+
+Items to vary could include:
+Initial fill characters
+Casing (lower, upper, mixed)
+Font colors (gray, much later do colors?)
+Backgrounds (maybe fade & stick per board for a while, then fade in-game?)
+Music
+
+Possible progression:
+1: *, lower case, black
+2: -, lower case, black
+3: -, upper case, black
+4: |, upper case, black
+5: /, upper case, black
+6-9: random chars to start, upper case, black
+10+: Mixed case
+15: 2 tones of characters.
+20: Music starts.
+25: 3 tones of characters.
+30: Solid background fades.
+35: 4 tones of characters.
+40: Pulsating backgrounds.
+45: 5 tones of characters.
+50: Multicolored fonts. (Hm, maybe tones should be alpha value instead of gray shades?)
+
+This is probably good for a version 1.1. Future enhancements could include:
+* Pictures in background.
+* Moving words in background.
+* Off-centered letter positions.
+* Vertical words (stretch goal! and beware of limited height on some screens)
+* Diagonal words (as above).
+
+Thoughts on UI:
+* Mute (toggle on/off).
+* Restart with confirmation
+* Stats (maybe an icon near Mute? )
+  * Total solves
+  * Fastest solve
+  * Longest correct streak
+  *
 
 Bugs:
 * As of 6/14/2020, autofocus does not work on profile or release builds. Working around this by requiring manual focus.

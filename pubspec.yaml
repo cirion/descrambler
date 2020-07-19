@@ -30,10 +30,12 @@ dependencies:
   cupertino_icons: ^0.1.3
   english_words: ^3.1.0
   dart_random_choice: ^0.0.2
-  google_fonts: ^1.1.0
   random_string: ^1.1.0
   url_launcher: ^5.4.10
   rxdart: ^0.24.1
+  audioplayers: ^0.15.1
+  shared_preferences: '>=0.5.8 <2.0.0'
+  flutter_svg: ^0.18.0
 
 dev_dependencies:
   flutter_test:
@@ -49,6 +51,13 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/ding.mp3
+    - assets/wrong.wav
+    - assets/kai_engel_09_homeroad.mp3
+    - assets/music_off-white-24dp.svg
+    - assets/music_note-white-24dp.svg
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -66,6 +75,11 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
+  fonts:
+    - family: RobotoMono
+      fonts:
+        - asset: fonts/RobotoMono-Regular.ttf
+
   # fonts:
   #   - family: Schyler
   #     fonts:
