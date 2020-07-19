@@ -416,6 +416,8 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
      */
 
     final Widget mutedSvg = SvgPicture.asset("assets/music_off-white-24dp.svg");
+    final Widget unMutedSvg = SvgPicture.asset("assets/music_note-white-24dp.svg");
+    final audioImage = (muted) ? mutedSvg : unMutedSvg;
 
     final muteButton = Align(
       alignment: Alignment.centerRight,
@@ -424,15 +426,15 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         child: FlatButton(
           onPressed: _toggleAudio,
           padding: EdgeInsets.all(0.0),
-          child: mutedSvg,
+          child: audioImage,
         )
       )
     );
 
     if (muted) {
-      activeMusic.setVolume(0.0);
+      activeMusic?.setVolume(0.0);
     } else {
-      activeMusic.setVolume(1.0);
+      activeMusic?.setVolume(1.0);
     }
 
     final stack = Stack(
