@@ -424,29 +424,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       }
     }
 
-   final victory = Padding(
-          padding: EdgeInsets.only(right: 8.0),
-          child: CupertinoButton(
-            padding: EdgeInsets.all(0.0),
-            onPressed: _launchSolved,
-            child: Padding(
-              padding:
-                  EdgeInsets.only(left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
-              child: Text("More...",
-                  style: TextStyle(
-                    color: Colors.black,
-                  )),
-            ),
-          ),
-          /*
-        child: FlatButton(
-          onPressed: _launchURL,
-          child: Text("More..."),
-        )
-
-         */
-        );
-
     final privacy = Padding(
           padding: EdgeInsets.only(right: 0.0),
           child: CupertinoButton(
@@ -476,8 +453,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       children: <Widget>[],
 //      children: <Widget>[privacy],
     );
-
-    if (_victories > 2) buttons.children.add(victory);
 
     final buttonsContainer = Align(
         alignment: Alignment.centerRight,
@@ -518,7 +493,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     );
 
     if (_victories > 0) stack.children.add(solved);
-    //if (_victories > 2) stack.children.add(victory);
     stack.children.add(muteButton);
 
     final topContainer = Container(
