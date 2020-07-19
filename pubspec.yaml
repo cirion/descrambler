@@ -35,6 +35,7 @@ dependencies:
   rxdart: ^0.24.1
   audioplayers: ^0.15.1
   shared_preferences: '>=0.5.8 <2.0.0'
+  flutter_svg: ^0.18.0
 
 dev_dependencies:
   flutter_test:
@@ -55,6 +56,7 @@ flutter:
     - assets/ding.mp3
     - assets/wrong.wav
     - assets/kai_engel_09_homeroad.mp3
+    - assets/music_off-white-24dp.svg
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:random_string/random_string.dart';
 import 'package:rxdart/subjects.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -106,6 +107,8 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   Duration _delaysBetweenReveals = Duration(seconds: 30);
   final Duration _extraDelayPerMatch = Duration(seconds: 30);
   DateTime _nextRevealTime;
+
+  bool muted = false;
 
   Guess _guess = Guess.none;
 
@@ -319,9 +322,17 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       backgroundColor: Colors.lightGreen,
     );
 
+    void _toggleAudio() async {
+      setState(() {
+        muted = !muted;
+      });
+    }
+
     void _handleSubmitted(String value) async {
       if (value.trim().toLowerCase() == _secretWord.toLowerCase()) {
-        sfxPlayer.play(dingAudioPath);
+        if (!muted) {
+          sfxPlayer.play(dingAudioPath);
+        }
 
         SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.setInt("victories", _victories + 1);
@@ -336,7 +347,9 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
 
         _generateSecretWord();
       } else {
-        sfxPlayer.play(wrongAudioPath);
+        if (!muted) {
+          sfxPlayer.play(wrongAudioPath);
+        }
         setState(() {
           _guess = Guess.incorrect;
         });
@@ -391,15 +404,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         //)
         );
 
-    _launchURL() async {
-      const url = 'http://www.lexencrypt.com/solved';
-      if (await canLaunch(url)) {
-        await launch(url);
-      } else {
-        throw 'Could not launch $url';
-      }
-    }
-
+    /*
     final victory = Align(
         alignment: Alignment.centerRight,
         // TODO: Cupertino button here?
@@ -407,6 +412,28 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
           onPressed: _launchURL,
           child: Text("More..."),
         ));
+
+     */
+
+    final Widget mutedSvg = SvgPicture.asset("assets/music_off-white-24dp.svg");
+
+    final muteButton = Align(
+      alignment: Alignment.centerRight,
+      child: ConstrainedBox(
+        constraints: BoxConstraints.expand(),
+        child: FlatButton(
+          onPressed: _toggleAudio,
+          padding: EdgeInsets.all(0.0),
+          child: mutedSvg,
+        )
+      )
+    );
+
+    if (muted) {
+      activeMusic.setVolume(0.0);
+    } else {
+      activeMusic.setVolume(1.0);
+    }
 
     final stack = Stack(
       alignment: Alignment.center,
@@ -418,7 +445,8 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     );
 
     if (_victories > 0) stack.children.add(solved);
-    if (_victories > 2) stack.children.add(victory);
+    //if (_victories > 2) stack.children.add(victory);
+    stack.children.add(muteButton);
 
     final topContainer = Container(
       child: (_rowCount == 0) ? null : stack,
@@ -679,9 +707,6 @@ Thoughts on UI:
   * Fastest solve
   * Longest correct streak
   *
-
-TODO:
-* Gracefully shut down music while backgrounded and immediately after exiting.
 
 Bugs:
 * As of 6/14/2020, autofocus does not work on profile or release builds. Working around this by requiring manual focus.
