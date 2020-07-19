@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:dart_random_choice/dart_random_choice.dart';
 import 'package:english_words/english_words.dart';
 import 'package:flutter/cupertino.dart';
@@ -28,7 +29,12 @@ class MyApp extends StatelessWidget {
     ]);
     sfxPlayer.loadAll([dingAudioPath, wrongAudioPath]);
     musicPlayer.loadAll([musicAudioPath]);
-    musicPlayer.play(musicAudioPath);
+    final futureMusic = musicPlayer.play(musicAudioPath);
+    Future.wait(
+      [
+        () async { activeMusic = await futureMusic; } ()
+      ]
+    );
     //return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
     return MaterialApp(
         title: 'Lexencrypt',
@@ -78,8 +84,9 @@ final wrongAudioPath = "wrong.wav";
 
 AudioCache musicPlayer = new AudioCache();
 final musicAudioPath = "kai_engel_09_homeroad.mp3";
+AudioPlayer activeMusic;
 
-class RandomWordsState extends State<RandomWords> {
+class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   static final _monoFont = TextStyle(
       fontFamily: 'RobotoMono',
       fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
@@ -263,6 +270,8 @@ class RandomWordsState extends State<RandomWords> {
   void initState() {
     super.initState();
 
+    WidgetsBinding.instance.addObserver(this);
+
     WidgetsBinding.instance.addPostFrameCallback(_afterLayout);
 
     _focusNode.addListener(() {
@@ -275,6 +284,23 @@ class RandomWordsState extends State<RandomWords> {
     });
 
     _loadSave();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      // TODO: Only if on a music-enabled stage.
+      activeMusic.pause();
+    } else {
+      activeMusic.resume();
+    }
+    //setState(() { _notification = state; });
   }
 
   _loadSave() async {
