@@ -421,13 +421,14 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
 
     final muteButton = Align(
       alignment: Alignment.centerRight,
-      child: ConstrainedBox(
-        constraints: BoxConstraints.expand(),
-        child: FlatButton(
-          onPressed: _toggleAudio,
-          padding: EdgeInsets.all(0.0),
-          child: audioImage,
-        )
+      child: AspectRatio(
+        aspectRatio: 1.0,
+          child: FlatButton(
+            onPressed: _toggleAudio,
+            padding: EdgeInsets.all(0.0),
+            child: audioImage,
+          )
+
       )
     );
 
