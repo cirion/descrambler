@@ -330,7 +330,39 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       });
     }
 
-    void _openInfo() async {}
+    void _restart() async {
+      // TODO: Update persistence, too.
+      setState(() {
+        _victories = 0;
+      });
+      _initBoard();
+    }
+
+    void _openInfo() async {
+      // TODO: Use Cupertino dialog for iOS.
+      showDialog(context: context,
+        builder: (BuildContext context) {
+        return AlertDialog(
+content: Text("Hello"),
+          actions: <Widget> [
+            FlatButton(
+              child: Text("Restart"),
+              onPressed: () {
+                _restart();
+                Navigator.of(context).pop();
+              },
+            ),
+            FlatButton(
+              child: Text("Continue"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            )
+          ],
+        );
+        }
+      );
+    }
 
     void _handleSubmitted(String value) async {
       if (value.trim().toLowerCase() == _secretWord.toLowerCase()) {
