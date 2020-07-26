@@ -31,16 +31,16 @@ class MyApp extends StatelessWidget {
     sfxPlayer.loadAll([dingAudioPath, wrongAudioPath]);
     musicPlayer.loadAll([musicAudioPath]);
     final futureMusic = musicPlayer.play(musicAudioPath);
-    Future.wait(
-      [
-        () async { activeMusic = await futureMusic; } ()
-      ]
-    );
+    Future.wait([
+      () async {
+        activeMusic = await futureMusic;
+      }()
+    ]);
     //return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
     return MaterialApp(
-        title: 'Lexencrypt',
-        //theme: ThemeData(fontFamily: "RobotoMono"),
-        home: RandomWords(),
+      title: 'Lexencrypt',
+      //theme: ThemeData(fontFamily: "RobotoMono"),
+      home: RandomWords(),
     );
   }
 }
@@ -90,7 +90,8 @@ AudioPlayer activeMusic;
 class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   static final _monoFont = TextStyle(
       fontFamily: 'RobotoMono',
-      fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()]);
   final _random = Random();
 
   String _secretWord;
@@ -188,6 +189,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     _secretWord = randomChoice(nouns
         .toList()
         .where((element) => element.length >= 6 && element.length <= 12));
+    debugPrint("Secret word is $_secretWord");
 
     final secretWordLength = _secretWord.length;
 
@@ -328,6 +330,8 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       });
     }
 
+    void _openInfo() async {}
+
     void _handleSubmitted(String value) async {
       if (value.trim().toLowerCase() == _secretWord.toLowerCase()) {
         if (!muted) {
@@ -416,21 +420,29 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
      */
 
     final Widget mutedSvg = SvgPicture.asset("assets/music_off-white-24dp.svg");
-    final Widget unMutedSvg = SvgPicture.asset("assets/music_note-white-24dp.svg");
+    final Widget unMutedSvg =
+        SvgPicture.asset("assets/music_note-white-24dp.svg");
     final audioImage = (muted) ? mutedSvg : unMutedSvg;
+    final Widget infoSvg = SvgPicture.asset("assets/info-white-24dp.svg");
 
-    final muteButton = Align(
-      alignment: Alignment.centerRight,
-      child: AspectRatio(
-        aspectRatio: 1.0,
-          child: FlatButton(
-            onPressed: _toggleAudio,
-            padding: EdgeInsets.all(0.0),
-            child: audioImage,
-          )
-
-      )
-    );
+    final buttons = Align(
+        alignment: Alignment.centerRight,
+        child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+          AspectRatio(
+              aspectRatio: 1.0,
+              child: FlatButton(
+                onPressed: _openInfo,
+                padding: EdgeInsets.all(0.0),
+                child: infoSvg,
+              )),
+          AspectRatio(
+              aspectRatio: 1.0,
+              child: FlatButton(
+                onPressed: _toggleAudio,
+                padding: EdgeInsets.all(0.0),
+                child: audioImage,
+              )),
+        ]));
 
     if (muted) {
       activeMusic?.setVolume(0.0);
@@ -448,8 +460,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     );
 
     if (_victories > 0) stack.children.add(solved);
-    //if (_victories > 2) stack.children.add(victory);
-    stack.children.add(muteButton);
+    stack.children.add(buttons);
 
     final topContainer = Container(
       child: (_rowCount == 0) ? null : stack,
@@ -657,7 +668,7 @@ Release checklist:
 
 Stretch:
 * More feedback messages (especially failure). Test fade.
-* Bundle RobotoMono font into app assets and remove Internet permission.
+* Persist muted state across restarts
 
 Post-launch:
 * Save high score
@@ -713,5 +724,6 @@ Thoughts on UI:
 
 Bugs:
 * As of 6/14/2020, autofocus does not work on profile or release builds. Working around this by requiring manual focus.
+* Music sometimes doesn't immediately stop when backgrounded or stopped. And/or duplicate music can play when re-launching.
 
 */
