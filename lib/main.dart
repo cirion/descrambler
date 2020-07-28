@@ -16,7 +16,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:random_string/random_string.dart';
 import 'package:rxdart/subjects.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:audioplayers/audio_cache.dart';
 
 void main() => runApp(MyApp());
@@ -30,12 +29,6 @@ class MyApp extends StatelessWidget {
     ]);
     sfxPlayer.loadAll([dingAudioPath, wrongAudioPath]);
     musicPlayer.loadAll([musicAudioPath]);
-    final futureMusic = musicPlayer.play(musicAudioPath);
-    Future.wait([
-      () async {
-        activeMusic = await futureMusic;
-      }()
-    ]);
     //return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
     return MaterialApp(
       title: 'Lexencrypt',
@@ -109,7 +102,10 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   final Duration _extraDelayPerMatch = Duration(seconds: 30);
   DateTime _nextRevealTime;
 
-  bool muted = false;
+  static const String PREFERENCE_VICTORIES = "victories";
+  static const String PREFERENCE_MUTED = "muted";
+
+  bool _muted = false;
 
   Guess _guess = Guess.none;
 
@@ -248,13 +244,9 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       final glyphWidth = txtSize.width;
       final glyphHeight = txtSize.height;
 
-//      print("txtSize after layout is $glyphWidth x $glyphHeight");
-
       _rowCount = (_getWindowHeight() ~/ glyphHeight);
 
       _columnCount = _getWindowWidth() ~/ glyphWidth;
-
-//      print("Got $_rowCount rows and $_columnCount columns.");
 
       _generateSecretWord();
     });
@@ -275,6 +267,8 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   void initState() {
     super.initState();
 
+    _loadSave();
+
     WidgetsBinding.instance.addObserver(this);
 
     WidgetsBinding.instance.addPostFrameCallback(_afterLayout);
@@ -287,8 +281,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         FocusScope.of(context).requestFocus(_focusNode);
       }
     });
-
-    _loadSave();
   }
 
   @override
@@ -299,19 +291,42 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state != AppLifecycleState.resumed) {
-      // TODO: Only if on a music-enabled stage.
+    if (state != AppLifecycleState.resumed || _muted) {
       activeMusic.pause();
+    } else {
+      _startPlayingMusic();
+    }
+  }
+
+  _startPlayingMusic() async {
+    if (activeMusic == null) {
+      final futureMusic = musicPlayer.play(musicAudioPath);
+      Future.wait([
+            () async {
+          activeMusic = await futureMusic;
+          _updateMusicState();
+        }()
+      ]);
     } else {
       activeMusic.resume();
     }
-    //setState(() { _notification = state; });
+  }
+
+  _updateMusicState() {
+    if (_muted) {
+      activeMusic?.setVolume(0.0);
+    } else {
+      activeMusic?.setVolume(1.0);
+      _startPlayingMusic();
+    }
   }
 
   _loadSave() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    debugPrint("Setting state");
     setState(() {
-      _victories = (prefs.getInt('victories') ?? 0);
+      _victories = (prefs.getInt(PREFERENCE_VICTORIES) ?? 0);
+      _muted = (prefs.getBool(PREFERENCE_MUTED) ?? false);
     });
   }
 
@@ -325,48 +340,54 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     );
 
     void _toggleAudio() async {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setBool(PREFERENCE_MUTED, !_muted);
       setState(() {
-        muted = !muted;
+        _muted = !_muted;
       });
     }
 
     void _restart() async {
       // TODO: Update persistence, too.
+      // Also starting message, etc.
       setState(() {
         _victories = 0;
       });
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setInt(PREFERENCE_VICTORIES, 0);
+
       _initBoard();
     }
 
     void _openInfo() async {
       // TODO: Use Cupertino dialog for iOS.
-      showDialog(context: context,
-        builder: (BuildContext context) {
-        return AlertDialog(
-content: Text("Hello"),
-          actions: <Widget> [
-            FlatButton(
-              child: Text("Restart"),
-              onPressed: () {
-                _restart();
-                Navigator.of(context).pop();
-              },
-            ),
-            FlatButton(
-              child: Text("Continue"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            )
-          ],
-        );
-        }
-      );
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text("Hello"),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text("Restart"),
+                  onPressed: () {
+                    _restart();
+                    Navigator.of(context).pop();
+                  },
+                ),
+                FlatButton(
+                  child: Text("Continue"),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+            );
+          });
     }
 
     void _handleSubmitted(String value) async {
       if (value.trim().toLowerCase() == _secretWord.toLowerCase()) {
-        if (!muted) {
+        if (!_muted) {
           sfxPlayer.play(dingAudioPath);
         }
 
@@ -383,7 +404,7 @@ content: Text("Hello"),
 
         _generateSecretWord();
       } else {
-        if (!muted) {
+        if (!_muted) {
           sfxPlayer.play(wrongAudioPath);
         }
         setState(() {
@@ -454,7 +475,7 @@ content: Text("Hello"),
     final Widget mutedSvg = SvgPicture.asset("assets/music_off-white-24dp.svg");
     final Widget unMutedSvg =
         SvgPicture.asset("assets/music_note-white-24dp.svg");
-    final audioImage = (muted) ? mutedSvg : unMutedSvg;
+    final audioImage = (_muted) ? mutedSvg : unMutedSvg;
     final Widget infoSvg = SvgPicture.asset("assets/info-white-24dp.svg");
 
     final buttons = Align(
@@ -476,11 +497,7 @@ content: Text("Hello"),
               )),
         ]));
 
-    if (muted) {
-      activeMusic?.setVolume(0.0);
-    } else {
-      activeMusic?.setVolume(1.0);
-    }
+    _updateMusicState();
 
     final stack = Stack(
       alignment: Alignment.center,
