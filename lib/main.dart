@@ -102,8 +102,15 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   final Duration _extraDelayPerMatch = Duration(seconds: 30);
   DateTime _nextRevealTime;
 
-  static const String PREFERENCE_VICTORIES = "victories";
+  int _statTotalSolves;
+  int _statFastestSolve;
+  int _statLongestStreak;
+
+  static const String PREFERENCE_CURRENT_VICTORIES = "current_victories";
   static const String PREFERENCE_MUTED = "muted";
+  static const String PREFERENCE_STAT_TOTAL_VICTORIES = "total_victories";
+  static const String PREFERENCE_STAT_FASTEST_SOLVE = "fastest_solve";
+  static const String PREFERENCE_STAT_LONGEST_STREAK = "longest_streak";
 
   bool _muted = false;
 
@@ -325,7 +332,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     debugPrint("Setting state");
     setState(() {
-      _victories = (prefs.getInt(PREFERENCE_VICTORIES) ?? 0);
+      _victories = (prefs.getInt(PREFERENCE_CURRENT_VICTORIES) ?? 0);
       _muted = (prefs.getBool(PREFERENCE_MUTED) ?? false);
     });
   }
@@ -354,7 +361,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         _victories = 0;
       });
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setInt(PREFERENCE_VICTORIES, 0);
+      prefs.setInt(PREFERENCE_CURRENT_VICTORIES, 0);
 
       _initBoard();
     }
@@ -365,7 +372,21 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              content: Text("Hello"),
+              content: Container (
+                width: MediaQuery.of(context).size.width * .5,
+                child: GridView.count(
+                  shrinkWrap: true,
+                  mainAxisSpacing: 0,
+                // Create a grid with 2 columns. If you change the scrollDirection to
+                // horizontal, this produces 2 rows.
+                  crossAxisCount: 2,
+                  // Generate 100 widgets that display their index in the List.
+                  children: <Widget> [
+                    Text("Total Solves"), Text("$_statTotalSolves"),
+                    Text("Fastest Solve"), Text("$_statTotalSolves"),
+                    Text("Longest Streak"), Text("$_statTotalSolves"),
+                  ]
+              )),
               actions: <Widget>[
                 FlatButton(
                   child: Text("Restart"),
@@ -724,9 +745,7 @@ Post-launch:
 * Track time (per-board and/or total)
 * Background and foreground support w/timer
 * Button to restart
-* Music
 * Change background colors
-* Remove "More..." button
 
 Thoughts on game progression:
 Now that state can be saved, I'd like to extend the "discoveries" a bit more.
@@ -769,7 +788,6 @@ Thoughts on UI:
   * Total solves
   * Fastest solve
   * Longest correct streak
-  *
 
 Bugs:
 * As of 6/14/2020, autofocus does not work on profile or release builds. Working around this by requiring manual focus.
