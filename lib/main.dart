@@ -309,7 +309,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     if (activeMusic == null) {
       final futureMusic = musicPlayer.play(musicAudioPath);
       Future.wait([
-            () async {
+        () async {
           activeMusic = await futureMusic;
           _updateMusicState();
         }()
@@ -372,21 +372,14 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              content: Container (
-                width: MediaQuery.of(context).size.width * .5,
-                child: GridView.count(
-                  shrinkWrap: true,
-                  mainAxisSpacing: 0,
-                // Create a grid with 2 columns. If you change the scrollDirection to
-                // horizontal, this produces 2 rows.
-                  crossAxisCount: 2,
-                  // Generate 100 widgets that display their index in the List.
-                  children: <Widget> [
-                    Text("Total Solves"), Text("$_statTotalSolves"),
-                    Text("Fastest Solve"), Text("$_statTotalSolves"),
-                    Text("Longest Streak"), Text("$_statTotalSolves"),
-                  ]
-              )),
+              content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text("Total Solves: $_statTotalSolves"),
+                    Text("Fastest Solve: $_statTotalSolves"),
+                    Text("Longest Streak: $_statTotalSolves"),
+                  ]),
               actions: <Widget>[
                 FlatButton(
                   child: Text("Restart"),
