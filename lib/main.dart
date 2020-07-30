@@ -96,6 +96,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   int _rotationIntervalMillis = 100;
   Timer _timer;
   int _victories = 0;
+  int _streak = 0;
   double _rotationFactor = 0.1;
   int _hitsToReveal = 1;
   Duration _delaysBetweenReveals = Duration(seconds: 30);
@@ -334,6 +335,9 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     setState(() {
       _victories = (prefs.getInt(PREFERENCE_CURRENT_VICTORIES) ?? 0);
       _muted = (prefs.getBool(PREFERENCE_MUTED) ?? false);
+      _statTotalSolves = (prefs.getInt(PREFERENCE_STAT_TOTAL_VICTORIES) ?? 0);
+      _statFastestSolve = (prefs.getInt(PREFERENCE_STAT_FASTEST_SOLVE) ?? 0);
+      _statLongestStreak = (prefs.getInt(PREFERENCE_STAT_LONGEST_STREAK) ?? 0);
     });
   }
 
@@ -406,11 +410,21 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         }
 
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setInt("victories", _victories + 1);
+        prefs.setInt(PREFERENCE_CURRENT_VICTORIES, _victories + 1);
+        prefs.setInt(PREFERENCE_STAT_TOTAL_VICTORIES, _statTotalSolves + 1);
+        if (_streak + 1 > _statLongestStreak) {
+          prefs.setInt(PREFERENCE_STAT_LONGEST_STREAK, _streak + 1);
+        }
 
         setState(() {
           _guess = Guess.correct;
           _victories = _victories + 1;
+          _streak = _streak + 1;
+          // TODO: Make sure this works.
+          if (_streak > _statLongestStreak) {
+            _statLongestStreak = _streak;
+          }
+          _statTotalSolves = _statTotalSolves + 1;
           _delaysBetweenReveals = Duration(
               seconds: _delaysBetweenReveals.inSeconds +
                   _extraDelayPerMatch.inSeconds);
@@ -422,6 +436,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
           sfxPlayer.play(wrongAudioPath);
         }
         setState(() {
+          // TODO: Reset streak.
           _guess = Guess.incorrect;
         });
       }
@@ -785,5 +800,6 @@ Thoughts on UI:
 Bugs:
 * As of 6/14/2020, autofocus does not work on profile or release builds. Working around this by requiring manual focus.
 * Music sometimes doesn't immediately stop when backgrounded or stopped. And/or duplicate music can play when re-launching.
+* There's some extra padding between the buttons and the content of the AlertDialog.
 
 */
