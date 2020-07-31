@@ -359,10 +359,11 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     }
 
     void _restart() async {
-      // TODO: Update persistence, too.
       // Also starting message, etc.
       setState(() {
         _victories = 0;
+        _streak = 0;
+        _guess = Guess.none;
       });
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setInt(PREFERENCE_CURRENT_VICTORIES, 0);
@@ -382,7 +383,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
                   children: <Widget>[
                     Text("Total Solves: $_statTotalSolves"),
                     Text("Fastest Solve: $_statTotalSolves"),
-                    Text("Longest Streak: $_statTotalSolves"),
+                    Text("Longest Streak: $_statLongestStreak"),
                   ]),
               actions: <Widget>[
                 FlatButton(
@@ -436,8 +437,8 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
           sfxPlayer.play(wrongAudioPath);
         }
         setState(() {
-          // TODO: Reset streak.
           _guess = Guess.incorrect;
+          _streak = 0;
         });
       }
     }
@@ -754,6 +755,7 @@ Post-launch:
 * Background and foreground support w/timer
 * Button to restart
 * Change background colors
+* Credits?
 
 Thoughts on game progression:
 Now that state can be saved, I'd like to extend the "discoveries" a bit more.
