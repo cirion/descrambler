@@ -97,6 +97,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   Timer _timer;
   int _victories = 0;
   int _streak = 0;
+  DateTime _matchStartTime;
   double _rotationFactor = 0.1;
   int _hitsToReveal = 1;
   Duration _delaysBetweenReveals = Duration(seconds: 30);
@@ -104,8 +105,8 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   DateTime _nextRevealTime;
 
   int _statTotalSolves;
-  int _statFastestSolve;
   int _statLongestStreak;
+  Duration _statFastestSolve;
 
   static const String PREFERENCE_CURRENT_VICTORIES = "current_victories";
   static const String PREFERENCE_MUTED = "muted";
@@ -210,6 +211,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       _secretWordX = _random.nextInt(_columnCount - secretWordLength);
       _secretWordY = _random.nextInt(_rowCount);
       _nextRevealTime = DateTime.now().add(_delaysBetweenReveals);
+      _matchStartTime = DateTime.now();
     });
     _timer?.cancel();
     _timer = Timer.periodic(Duration(milliseconds: _rotationIntervalMillis),
@@ -336,7 +338,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       _victories = (prefs.getInt(PREFERENCE_CURRENT_VICTORIES) ?? 0);
       _muted = (prefs.getBool(PREFERENCE_MUTED) ?? false);
       _statTotalSolves = (prefs.getInt(PREFERENCE_STAT_TOTAL_VICTORIES) ?? 0);
-      _statFastestSolve = (prefs.getInt(PREFERENCE_STAT_FASTEST_SOLVE) ?? 0);
+      _statFastestSolve = Duration(seconds: (prefs.getInt(PREFERENCE_STAT_FASTEST_SOLVE) ?? 0));
       _statLongestStreak = (prefs.getInt(PREFERENCE_STAT_LONGEST_STREAK) ?? 0);
     });
   }
@@ -382,7 +384,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text("Total Solves: $_statTotalSolves"),
-                    Text("Fastest Solve: $_statTotalSolves"),
+                    Text("Fastest Solve: ${_statFastestSolve.toString().substring(2, 7)}"),
                     Text("Longest Streak: $_statLongestStreak"),
                   ]),
               actions: <Widget>[
@@ -417,13 +419,20 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
           prefs.setInt(PREFERENCE_STAT_LONGEST_STREAK, _streak + 1);
         }
 
+        final solveTime = DateTime.now().difference(_matchStartTime);
+        if (solveTime.compareTo(_statFastestSolve) < 0) {
+          prefs.setInt(PREFERENCE_STAT_FASTEST_SOLVE, solveTime.inSeconds);
+        }
+
         setState(() {
           _guess = Guess.correct;
           _victories = _victories + 1;
           _streak = _streak + 1;
-          // TODO: Make sure this works.
           if (_streak > _statLongestStreak) {
             _statLongestStreak = _streak;
+          }
+          if (solveTime.compareTo(_statFastestSolve) < 0) {
+            _statFastestSolve = solveTime;
           }
           _statTotalSolves = _statTotalSolves + 1;
           _delaysBetweenReveals = Duration(
