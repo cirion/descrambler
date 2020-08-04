@@ -334,11 +334,13 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   _loadSave() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     debugPrint("Setting state");
+    final fastestSolveSeconds = prefs.getInt(PREFERENCE_STAT_FASTEST_SOLVE);
+    final fastestSolveDuration = fastestSolveSeconds == null ? null : Duration(seconds: fastestSolveSeconds);
     setState(() {
       _victories = (prefs.getInt(PREFERENCE_CURRENT_VICTORIES) ?? 0);
       _muted = (prefs.getBool(PREFERENCE_MUTED) ?? false);
       _statTotalSolves = (prefs.getInt(PREFERENCE_STAT_TOTAL_VICTORIES) ?? 0);
-      _statFastestSolve = Duration(seconds: (prefs.getInt(PREFERENCE_STAT_FASTEST_SOLVE) ?? 0));
+      _statFastestSolve = fastestSolveDuration;
       _statLongestStreak = (prefs.getInt(PREFERENCE_STAT_LONGEST_STREAK) ?? 0);
     });
   }
@@ -366,6 +368,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         _victories = 0;
         _streak = 0;
         _guess = Guess.none;
+        _delaysBetweenReveals = Duration(seconds: 30);
       });
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setInt(PREFERENCE_CURRENT_VICTORIES, 0);
@@ -374,6 +377,34 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     }
 
     void _openInfo() async {
+
+      final statsList = <Widget> [
+        Text("Total Solves: $_statTotalSolves"),
+        Text("Longest Streak: $_statLongestStreak"),
+      ];
+      if (_statFastestSolve != null) {
+        statsList.add(Text("Fastest Solve: ${_statFastestSolve.toString().substring(2, 7)}"));
+      }
+
+      final actionsList = <Widget> [
+        FlatButton(
+          child: Text("Continue"),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        )
+
+      ];
+      if (_secretWord != null && _victories > 0) {
+        actionsList.insert(0, FlatButton(
+          child: Text("Restart"),
+          onPressed: () {
+            _restart();
+            Navigator.of(context).pop();
+          },
+        ));
+      }
+
       // TODO: Use Cupertino dialog for iOS.
       showDialog(
           context: context,
@@ -382,26 +413,9 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
               content: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text("Total Solves: $_statTotalSolves"),
-                    Text("Fastest Solve: ${_statFastestSolve.toString().substring(2, 7)}"),
-                    Text("Longest Streak: $_statLongestStreak"),
-                  ]),
-              actions: <Widget>[
-                FlatButton(
-                  child: Text("Restart"),
-                  onPressed: () {
-                    _restart();
-                    Navigator.of(context).pop();
-                  },
-                ),
-                FlatButton(
-                  child: Text("Continue"),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                )
-              ],
+                  children: statsList,
+                  ),
+              actions: actionsList,
             );
           });
     }
@@ -420,7 +434,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         }
 
         final solveTime = DateTime.now().difference(_matchStartTime);
-        if (solveTime.compareTo(_statFastestSolve) < 0) {
+        if (_statFastestSolve == null || solveTime.compareTo(_statFastestSolve) < 0) {
           prefs.setInt(PREFERENCE_STAT_FASTEST_SOLVE, solveTime.inSeconds);
         }
 
@@ -431,7 +445,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
           if (_streak > _statLongestStreak) {
             _statLongestStreak = _streak;
           }
-          if (solveTime.compareTo(_statFastestSolve) < 0) {
+          if (_statFastestSolve == null || solveTime.compareTo(_statFastestSolve) < 0) {
             _statFastestSolve = solveTime;
           }
           _statTotalSolves = _statTotalSolves + 1;
