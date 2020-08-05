@@ -121,8 +121,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
 
   Guess _guess = Guess.none;
 
-  String _wrongMessage = "";
-  String _rightMessage = "";
+  String _feedbackMessage = "";
 
   List<List<Box>> _grid = new List<List<Box>>();
 
@@ -286,9 +285,11 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       final glyphWidth = txtSize.width;
       final glyphHeight = txtSize.height;
 
-      _rowCount = (_getWindowHeight() ~/ glyphHeight);
+      _rowCount = _getWindowHeight() ~/ glyphHeight;
 
       _columnCount = _getWindowWidth() ~/ glyphWidth;
+
+      _feedbackMessage = "What is the word?";
 
       _generateSecretWord();
     });
@@ -403,8 +404,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         _victories = 0;
         _streak = 0;
         _guess = Guess.none;
-        _wrongMessage = "";
-        _rightMessage = "";
+        _feedbackMessage = "What is the word?";
         _delaysBetweenReveals = Duration(seconds: 30);
       });
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -485,11 +485,11 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
           prefs.setString(PREFERENCE_STAT_LONGEST_WORD, value);
         }
 
-        final messageIndex = _random.nextInt(_rightMessages.length) - 1;
+        final messageIndex = _random.nextInt(_rightMessages.length);
 
         setState(() {
           _guess = Guess.correct;
-          _rightMessage = _rightMessages[messageIndex];
+          _feedbackMessage = _rightMessages[messageIndex];
           _victories = _victories + 1;
           _streak = _streak + 1;
           if (_streak > _statLongestStreak) {
@@ -517,70 +517,21 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         final messageIndex = _random.nextInt(_wrongMessages.length);
         setState(() {
           _guess = Guess.incorrect;
-          _wrongMessage = _wrongMessages[messageIndex];
+          _feedbackMessage = _wrongMessages[messageIndex];
           _streak = 0;
         });
       }
     }
 
-    /*
-    final incorrectOpacity = AnimatedOpacity(
-      // If the widget is visible, animate to 0.0 (invisible).
-      // If the widget is hidden, animate to 1.0 (fully visible).
-      opacity: _guess == Guess.incorrect ? 1.0 : 0.0,
-      duration: _fadeDuration,
-      child: Center(
-          child: Text(
-        _wrongMessage,
-        style: _feedbackStyle,
-      )),
-    );
-     */
-
-    String newString = "";
-    if (_guess == Guess.correct) {
-      newString = _rightMessage;
-    } else if (_guess == Guess.incorrect) {
-      newString = _wrongMessage;
-    } else if (_guess == Guess.none && _rowCount != null) {
-      newString = "What is the word?";
-    }
-
     final feedback = CrossFade<String>(
       initialData: "",
-      data: newString,
+      data: _feedbackMessage,
       builder: (value) => Center(
         child: Text(value,
         style: _feedbackStyle
         ),
       ),
     );
-
-    /*
-    final correctOpacity = AnimatedOpacity(
-      // If the widget is visible, animate to 0.0 (invisible).
-      // If the widget is hidden, animate to 1.0 (fully visible).
-      opacity: _guess == Guess.correct ? 1.0 : 0.0,
-      duration: _fadeDuration,
-      child: Center(
-          child: Text(
-        _rightMessage,
-        style: _feedbackStyle,
-      )),
-    );
-
-    final noneOpacity = AnimatedOpacity(
-      // If the widget is visible, animate to 0.0 (invisible).
-      // If the widget is hidden, animate to 1.0 (fully visible).
-      opacity: _guess == Guess.none ? 1.0 : 0.0,
-      duration: _fadeDuration,
-      child: Center(
-          child: Text(
-        (_rowCount == null) ? "" : "What is the word?",
-        style: _feedbackStyle,
-      )),
-    );
-     */
 
     final solved = Align(
         alignment: Alignment.centerLeft,
