@@ -1,7 +1,6 @@
 // I have no idea what I'm doing.
 
 import 'dart:async';
-import 'dart:html';
 import 'dart:math';
 import 'dart:ui';
 
@@ -14,6 +13,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lexencrypt/cross_fade.dart';
 import 'package:random_string/random_string.dart';
 import 'package:rxdart/subjects.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -523,6 +523,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       }
     }
 
+    /*
     final incorrectOpacity = AnimatedOpacity(
       // If the widget is visible, animate to 0.0 (invisible).
       // If the widget is hidden, animate to 1.0 (fully visible).
@@ -534,7 +535,28 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         style: _feedbackStyle,
       )),
     );
+     */
 
+    String newString = "";
+    if (_guess == Guess.correct) {
+      newString = _rightMessage;
+    } else if (_guess == Guess.incorrect) {
+      newString = _wrongMessage;
+    } else if (_guess == Guess.none && _rowCount != null) {
+      newString = "What is the word?";
+    }
+
+    final feedback = CrossFade<String>(
+      initialData: "",
+      data: newString,
+      builder: (value) => Center(
+        child: Text(value,
+        style: _feedbackStyle
+        ),
+      ),
+    );
+
+    /*
     final correctOpacity = AnimatedOpacity(
       // If the widget is visible, animate to 0.0 (invisible).
       // If the widget is hidden, animate to 1.0 (fully visible).
@@ -558,6 +580,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         style: _feedbackStyle,
       )),
     );
+     */
 
     final solved = Align(
         alignment: Alignment.centerLeft,
@@ -612,9 +635,10 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     final stack = Stack(
       alignment: Alignment.center,
       children: <Widget>[
-        incorrectOpacity,
-        correctOpacity,
-        noneOpacity,
+        feedback,
+        //incorrectOpacity,
+        //correctOpacity,
+        //noneOpacity,
       ],
     );
 
