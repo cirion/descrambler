@@ -107,12 +107,14 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   int _statTotalSolves;
   int _statLongestStreak;
   Duration _statFastestSolve;
+  String _statLongestWord;
 
   static const String PREFERENCE_CURRENT_VICTORIES = "current_victories";
   static const String PREFERENCE_MUTED = "muted";
   static const String PREFERENCE_STAT_TOTAL_VICTORIES = "total_victories";
   static const String PREFERENCE_STAT_FASTEST_SOLVE = "fastest_solve";
   static const String PREFERENCE_STAT_LONGEST_STREAK = "longest_streak";
+  static const String PREFERENCE_STAT_LONGEST_WORD = "longest_word";
 
   bool _muted = false;
 
@@ -342,6 +344,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       _statTotalSolves = (prefs.getInt(PREFERENCE_STAT_TOTAL_VICTORIES) ?? 0);
       _statFastestSolve = fastestSolveDuration;
       _statLongestStreak = (prefs.getInt(PREFERENCE_STAT_LONGEST_STREAK) ?? 0);
+      _statLongestWord = (prefs.getString(PREFERENCE_STAT_LONGEST_WORD));
     });
   }
 
@@ -382,6 +385,9 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         Text("Total Solves: $_statTotalSolves"),
         Text("Longest Streak: $_statLongestStreak"),
       ];
+      if (_statLongestWord != null) {
+        statsList.add(Text("Longest Word: $_statLongestWord"));
+      }
       if (_statFastestSolve != null) {
         statsList.add(Text("Fastest Solve: ${_statFastestSolve.toString().substring(2, 7)}"));
       }
@@ -438,6 +444,10 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
           prefs.setInt(PREFERENCE_STAT_FASTEST_SOLVE, solveTime.inSeconds);
         }
 
+        if (_statLongestWord == null || value.length >= _statLongestWord.length) {
+          prefs.setString(PREFERENCE_STAT_LONGEST_WORD, value);
+        }
+
         setState(() {
           _guess = Guess.correct;
           _victories = _victories + 1;
@@ -447,6 +457,9 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
           }
           if (_statFastestSolve == null || solveTime.compareTo(_statFastestSolve) < 0) {
             _statFastestSolve = solveTime;
+          }
+          if (_statLongestWord == null || value.length >= _statLongestWord.length) {
+            _statLongestWord = value;
           }
           _statTotalSolves = _statTotalSolves + 1;
           _delaysBetweenReveals = Duration(
