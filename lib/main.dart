@@ -1,6 +1,7 @@
 // I have no idea what I'm doing.
 
 import 'dart:async';
+import 'dart:html';
 import 'dart:math';
 import 'dart:ui';
 
@@ -120,6 +121,9 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
 
   Guess _guess = Guess.none;
 
+  String _wrongMessage = "";
+  String _rightMessage = "";
+
   List<List<Box>> _grid = new List<List<Box>>();
 
   final _feedbackStyle = TextStyle(
@@ -174,6 +178,32 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   }
 
   static final _startingCharacters = ["-", "|", "/", "\\", "*"];
+
+  static final _wrongMessages = [
+    "That's not it…",
+    "Not quite…",
+    "Try again…",
+    "Guess again…",
+    "Something else…",
+    "I wish…",
+    "If only…",
+    "…",
+    "Maybe another…",
+    "It's different…",
+  ];
+
+  static final _rightMessages = [
+    "That's right!",
+    "Way to go!",
+    "Keep going!",
+    "You got it!",
+    "Well played!",
+    "Indeed!",
+    "Truly!",
+    "Nice one!",
+    "Excellent!",
+    "That's it!",
+  ];
 
   _generateStartingCharacter() {
     if (_victories == 0) {
@@ -337,7 +367,9 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     debugPrint("Setting state");
     final fastestSolveSeconds = prefs.getInt(PREFERENCE_STAT_FASTEST_SOLVE);
-    final fastestSolveDuration = fastestSolveSeconds == null ? null : Duration(seconds: fastestSolveSeconds);
+    final fastestSolveDuration = fastestSolveSeconds == null
+        ? null
+        : Duration(seconds: fastestSolveSeconds);
     setState(() {
       _victories = (prefs.getInt(PREFERENCE_CURRENT_VICTORIES) ?? 0);
       _muted = (prefs.getBool(PREFERENCE_MUTED) ?? false);
@@ -371,6 +403,8 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         _victories = 0;
         _streak = 0;
         _guess = Guess.none;
+        _wrongMessage = "";
+        _rightMessage = "";
         _delaysBetweenReveals = Duration(seconds: 30);
       });
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -380,8 +414,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     }
 
     void _openInfo() async {
-
-      final statsList = <Widget> [
+      final statsList = <Widget>[
         Text("Total Solves: $_statTotalSolves"),
         Text("Longest Streak: $_statLongestStreak"),
       ];
@@ -389,26 +422,28 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         statsList.add(Text("Longest Word: $_statLongestWord"));
       }
       if (_statFastestSolve != null) {
-        statsList.add(Text("Fastest Solve: ${_statFastestSolve.toString().substring(2, 7)}"));
+        statsList.add(Text(
+            "Fastest Solve: ${_statFastestSolve.toString().substring(2, 7)}"));
       }
 
-      final actionsList = <Widget> [
+      final actionsList = <Widget>[
         FlatButton(
           child: Text("Continue"),
           onPressed: () {
             Navigator.of(context).pop();
           },
         )
-
       ];
       if (_secretWord != null && _victories > 0) {
-        actionsList.insert(0, FlatButton(
-          child: Text("Restart"),
-          onPressed: () {
-            _restart();
-            Navigator.of(context).pop();
-          },
-        ));
+        actionsList.insert(
+            0,
+            FlatButton(
+              child: Text("Restart"),
+              onPressed: () {
+                _restart();
+                Navigator.of(context).pop();
+              },
+            ));
       }
 
       // TODO: Use Cupertino dialog for iOS.
@@ -417,10 +452,10 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
           builder: (BuildContext context) {
             return AlertDialog(
               content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: statsList,
-                  ),
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: statsList,
+              ),
               actions: actionsList,
             );
           });
@@ -440,25 +475,32 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         }
 
         final solveTime = DateTime.now().difference(_matchStartTime);
-        if (_statFastestSolve == null || solveTime.compareTo(_statFastestSolve) < 0) {
+        if (_statFastestSolve == null ||
+            solveTime.compareTo(_statFastestSolve) < 0) {
           prefs.setInt(PREFERENCE_STAT_FASTEST_SOLVE, solveTime.inSeconds);
         }
 
-        if (_statLongestWord == null || value.length >= _statLongestWord.length) {
+        if (_statLongestWord == null ||
+            value.length >= _statLongestWord.length) {
           prefs.setString(PREFERENCE_STAT_LONGEST_WORD, value);
         }
 
+        final messageIndex = _random.nextInt(_rightMessages.length) - 1;
+
         setState(() {
           _guess = Guess.correct;
+          _rightMessage = _rightMessages[messageIndex];
           _victories = _victories + 1;
           _streak = _streak + 1;
           if (_streak > _statLongestStreak) {
             _statLongestStreak = _streak;
           }
-          if (_statFastestSolve == null || solveTime.compareTo(_statFastestSolve) < 0) {
+          if (_statFastestSolve == null ||
+              solveTime.compareTo(_statFastestSolve) < 0) {
             _statFastestSolve = solveTime;
           }
-          if (_statLongestWord == null || value.length >= _statLongestWord.length) {
+          if (_statLongestWord == null ||
+              value.length >= _statLongestWord.length) {
             _statLongestWord = value;
           }
           _statTotalSolves = _statTotalSolves + 1;
@@ -472,8 +514,10 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         if (!_muted) {
           sfxPlayer.play(wrongAudioPath);
         }
+        final messageIndex = _random.nextInt(_wrongMessages.length);
         setState(() {
           _guess = Guess.incorrect;
+          _wrongMessage = _wrongMessages[messageIndex];
           _streak = 0;
         });
       }
@@ -486,7 +530,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       duration: _fadeDuration,
       child: Center(
           child: Text(
-        "That's not it...",
+        _wrongMessage,
         style: _feedbackStyle,
       )),
     );
@@ -498,7 +542,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       duration: _fadeDuration,
       child: Center(
           child: Text(
-        "That's right!",
+        _rightMessage,
         style: _feedbackStyle,
       )),
     );
@@ -782,14 +826,11 @@ class StyledBox extends StatefulWidget {
 Release checklist:
 
 Stretch:
-* More feedback messages (especially failure). Test fade.
-* Persist muted state across restarts
+* More feedback messages (especially failure). Fade into "What is it?" and
+  between failure messages.
 
 Post-launch:
-* Save high score
-* Track time (per-board and/or total)
 * Background and foreground support w/timer
-* Button to restart
 * Change background colors
 * Credits?
 
@@ -826,14 +867,7 @@ This is probably good for a version 1.1. Future enhancements could include:
 * Off-centered letter positions.
 * Vertical words (stretch goal! and beware of limited height on some screens)
 * Diagonal words (as above).
-
-Thoughts on UI:
-* Mute (toggle on/off).
-* Restart with confirmation
-* Stats (maybe an icon near Mute? )
-  * Total solves
-  * Fastest solve
-  * Longest correct streak
+* Confirmation on Restart?
 
 Bugs:
 * As of 6/14/2020, autofocus does not work on profile or release builds. Working around this by requiring manual focus.
