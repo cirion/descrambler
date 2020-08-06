@@ -123,6 +123,8 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
 
   String _feedbackMessage = "";
 
+  Color _backgroundColor = Colors.white;
+
   List<List<Box>> _grid = new List<List<Box>>();
 
   final _feedbackStyle = TextStyle(
@@ -204,6 +206,13 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     "That's it!",
   ];
 
+  static final _backgroundColors = [
+    Colors.white,
+    Colors.green,
+    Colors.orange,
+    Colors.purple,
+  ];
+
   _generateStartingCharacter() {
     if (_victories == 0) {
       return "-";
@@ -243,6 +252,10 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       _secretWordY = _random.nextInt(_rowCount);
       _nextRevealTime = DateTime.now().add(_delaysBetweenReveals);
       _matchStartTime = DateTime.now();
+      // TODO: Add logic to only start doing this after a certain progression.
+      // Also, use better colors!
+      _backgroundColor =
+          _backgroundColors[_random.nextInt(_backgroundColors.length)];
     });
     _timer?.cancel();
     _timer = Timer.periodic(Duration(milliseconds: _rotationIntervalMillis),
@@ -667,15 +680,68 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
 
      */
 
-    final children = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        topContainer,
-        _buildGrid(),
-        _textField,
+    /*
+    final background = CrossFade<Color>(
+        initialData: Colors.transparent,
+        data: _backgroundColor,
+        builder: (value) => {
+        Scaffold(
+        appBar: appBar,
+        body: children,
+        );
+    }
+    );
+*/
+
+    /*
+    final children = CrossFade<Color>(
+      initialData: Colors.white,
+      data: _backgroundColor,
+      duration: Duration(seconds: 10),
+      builder: (value) =>
+      Container(
+        decoration: BoxDecoration(color: value),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            topContainer,
+            _buildGrid(),
+            _textField,
 //        _cupertinoTextField,
+          ],
+        )));
+
+     */
+
+    final children = Stack(
+      children: [
+        CrossFade<Color>(
+            initialData: Colors.white,
+            data: _backgroundColor,
+            duration: Duration(seconds: 3),
+            builder: (value) =>
+                Container(decoration: BoxDecoration(color: value))),
+        Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[topContainer, _buildGrid(), _textField])
       ],
     );
+
+    CrossFade<Color>(
+        initialData: Colors.white,
+        data: _backgroundColor,
+        duration: Duration(seconds: 10),
+        builder: (value) => Container(
+            decoration: BoxDecoration(color: value),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                topContainer,
+                _buildGrid(),
+                _textField,
+//        _cupertinoTextField,
+              ],
+            )));
 
     /*
     return CupertinoPageScaffold(
@@ -835,7 +901,6 @@ Release checklist:
 
 Post-launch:
 * Change background colors
-* Credits?
 
 Thoughts on game progression:
 Now that state can be saved, I'd like to extend the "discoveries" a bit more.
