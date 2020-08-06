@@ -413,6 +413,31 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       _initBoard();
     }
 
+    void _showCredits() {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text("Developed by Fifth Column"),
+                  Text("Audio by Kai Engel"),
+                ],
+              ),
+              actions: [
+                FlatButton(
+                  child: Text("Close"),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+            );
+          });
+    }
+
     void _openInfo() async {
       final statsList = <Widget>[
         Text("Total Solves: $_statTotalSolves"),
@@ -445,6 +470,16 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
               },
             ));
       }
+
+      actionsList.insert(
+          0,
+          FlatButton(
+            child: Text("Credits"),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _showCredits();
+            },
+          ));
 
       // TODO: Use Cupertino dialog for iOS.
       showDialog(
@@ -527,9 +562,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       initialData: "",
       data: _feedbackMessage,
       builder: (value) => Center(
-        child: Text(value,
-        style: _feedbackStyle
-        ),
+        child: Text(value, style: _feedbackStyle),
       ),
     );
 
@@ -800,12 +833,7 @@ class StyledBox extends StatefulWidget {
 /*
 Release checklist:
 
-Stretch:
-* More feedback messages (especially failure). Fade into "What is it?" and
-  between failure messages.
-
 Post-launch:
-* Background and foreground support w/timer
 * Change background colors
 * Credits?
 

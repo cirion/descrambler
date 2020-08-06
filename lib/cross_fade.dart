@@ -1,3 +1,5 @@
+// Source: https://gist.github.com/cirediew/38abb52e27278dae2b8eba77ed4b3bdc
+
 import 'package:flutter/material.dart';
 
 class CrossFade<T> extends StatefulWidget {
