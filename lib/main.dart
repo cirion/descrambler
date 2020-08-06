@@ -899,9 +899,6 @@ class StyledBox extends StatefulWidget {
 /*
 Release checklist:
 
-Post-launch:
-* Change background colors
-
 Thoughts on game progression:
 Now that state can be saved, I'd like to extend the "discoveries" a bit more.
 
@@ -925,7 +922,7 @@ Possible progression:
 25: 3 tones of characters.
 30: Solid background fades.
 35: 4 tones of characters.
-40: Pulsating backgrounds.
+40: Pulsating backgrounds. (And/or add another music track?)
 45: 5 tones of characters.
 50: Multicolored fonts. (Hm, maybe tones should be alpha value instead of gray shades?)
 
