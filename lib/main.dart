@@ -33,7 +33,6 @@ class MyApp extends StatelessWidget {
     //return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
     return MaterialApp(
       title: 'Lexencrypt',
-      //theme: ThemeData(fontFamily: "RobotoMono"),
       home: RandomWords(),
     );
   }
@@ -130,8 +129,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   final _feedbackStyle = TextStyle(
     color: Colors.white,
   );
-
-  final _fadeDuration = Duration(milliseconds: 500);
 
   _getWindowHeight() {
     final RenderBox renderBoxRed = _globalKey.currentContext.findRenderObject();
@@ -288,10 +285,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     });
   }
 
-  _afterLayout(_) {
-//    _initBoard();
-  }
-
   _initBoard() {
     Future.delayed(const Duration(milliseconds: 500), () {
       final Size txtSize = _textSize("M", _monoFont);
@@ -326,8 +319,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     _loadSave();
 
     WidgetsBinding.instance.addObserver(this);
-
-    WidgetsBinding.instance.addPostFrameCallback(_afterLayout);
 
     _focusNode.addListener(() {
       if (_rowCount == null) {
@@ -591,17 +582,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         //)
         );
 
-    /*
-    final victory = Align(
-        alignment: Alignment.centerRight,
-        // TODO: Cupertino button here?
-        child: FlatButton(
-          onPressed: _launchURL,
-          child: Text("More..."),
-        ));
-
-     */
-
     final Widget mutedSvg = SvgPicture.asset("assets/music_off-white-24dp.svg");
     final Widget unMutedSvg =
         SvgPicture.asset("assets/music_note-white-24dp.svg");
@@ -633,9 +613,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       alignment: Alignment.center,
       children: <Widget>[
         feedback,
-        //incorrectOpacity,
-        //correctOpacity,
-        //noneOpacity,
       ],
     );
 
@@ -662,8 +639,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       },
       focusNode: _focusNode,
       keyboardType: TextInputType.text,
-//      autofocus: true,
-//      decoration: InputDecoration(),
     );
 
     /*
@@ -677,39 +652,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       keyboardType: TextInputType.text,
       autofocus: true,
     );
-
-     */
-
-    /*
-    final background = CrossFade<Color>(
-        initialData: Colors.transparent,
-        data: _backgroundColor,
-        builder: (value) => {
-        Scaffold(
-        appBar: appBar,
-        body: children,
-        );
-    }
-    );
-*/
-
-    /*
-    final children = CrossFade<Color>(
-      initialData: Colors.white,
-      data: _backgroundColor,
-      duration: Duration(seconds: 10),
-      builder: (value) =>
-      Container(
-        decoration: BoxDecoration(color: value),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            topContainer,
-            _buildGrid(),
-            _textField,
-//        _cupertinoTextField,
-          ],
-        )));
 
      */
 
@@ -753,8 +695,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     );
 
      */
-
-    //_focusNode.requestFocus();
 
     return Scaffold(
       appBar: appBar,
