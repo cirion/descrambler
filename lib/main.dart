@@ -425,6 +425,9 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       showDialog(
           context: context,
           builder: (BuildContext context) {
+            // TODO: Probably need a CupertinoDialog or something here?
+            // Consider splitting out to a separate library, maybe.
+            // Also, update all other Dialogs.
             return AlertDialog(
               content: Column(
                 mainAxisSize: MainAxisSize.min,
