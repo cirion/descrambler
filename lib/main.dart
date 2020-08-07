@@ -13,11 +13,12 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lexencrypt/cross_fade.dart';
 import 'package:random_string/random_string.dart';
 import 'package:rxdart/subjects.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:audioplayers/audio_cache.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() => runApp(MyApp());
 
@@ -30,12 +31,6 @@ class MyApp extends StatelessWidget {
     ]);
     sfxPlayer.loadAll([dingAudioPath, wrongAudioPath]);
     musicPlayer.loadAll([musicAudioPath]);
-    final futureMusic = musicPlayer.play(musicAudioPath);
-    Future.wait(
-        [
-              () async { activeMusic = await futureMusic; } ()
-        ]
-    );
 
     return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
     //return MaterialApp(title: 'Lexencrypt', home: RandomWords());
@@ -87,7 +82,8 @@ AudioPlayer activeMusic;
 class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   static final _monoFont = TextStyle(
       fontFamily: 'RobotoMono',
-      fontSize: 18.0, fontFeatures: [FontFeature.tabularFigures()]);
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()]);
   final _random = Random();
 
   String _secretWord;
@@ -99,23 +95,39 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   int _rotationIntervalMillis = 100;
   Timer _timer;
   int _victories = 0;
+  int _streak = 0;
+  DateTime _matchStartTime;
   double _rotationFactor = 0.1;
   int _hitsToReveal = 1;
   Duration _delaysBetweenReveals = Duration(seconds: 30);
   final Duration _extraDelayPerMatch = Duration(seconds: 30);
   DateTime _nextRevealTime;
 
-  bool muted = false;
+  int _statTotalSolves;
+  int _statLongestStreak;
+  Duration _statFastestSolve;
+  String _statLongestWord;
+
+  static const String PREFERENCE_CURRENT_VICTORIES = "current_victories";
+  static const String PREFERENCE_MUTED = "muted";
+  static const String PREFERENCE_STAT_TOTAL_VICTORIES = "total_victories";
+  static const String PREFERENCE_STAT_FASTEST_SOLVE = "fastest_solve";
+  static const String PREFERENCE_STAT_LONGEST_STREAK = "longest_streak";
+  static const String PREFERENCE_STAT_LONGEST_WORD = "longest_word";
+
+  bool _muted = false;
 
   Guess _guess = Guess.none;
+
+  String _feedbackMessage = "";
+
+  Color _backgroundColor = Colors.white;
 
   List<List<Box>> _grid = new List<List<Box>>();
 
   final _feedbackStyle = TextStyle(
     color: Colors.white,
   );
-
-  final _fadeDuration = Duration(milliseconds: 500);
 
   _getWindowHeight() {
     final RenderBox renderBoxRed = _globalKey.currentContext.findRenderObject();
@@ -164,6 +176,39 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
 
   static final _startingCharacters = ["-", "|", "/", "\\", "*"];
 
+  static final _wrongMessages = [
+    "That's not it…",
+    "Not quite…",
+    "Try again…",
+    "Guess again…",
+    "Something else…",
+    "I wish…",
+    "If only…",
+    "…",
+    "Maybe another…",
+    "It's different…",
+  ];
+
+  static final _rightMessages = [
+    "That's right!",
+    "Way to go!",
+    "Keep going!",
+    "You got it!",
+    "Well played!",
+    "Indeed!",
+    "Truly!",
+    "Nice one!",
+    "Excellent!",
+    "That's it!",
+  ];
+
+  static final _backgroundColors = [
+    Colors.white,
+    Colors.green,
+    Colors.orange,
+    Colors.purple,
+  ];
+
   _generateStartingCharacter() {
     if (_victories == 0) {
       return "-";
@@ -185,6 +230,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     _secretWord = randomChoice(nouns
         .toList()
         .where((element) => element.length >= 6 && element.length <= 12));
+    debugPrint("Secret word is $_secretWord");
 
     final secretWordLength = _secretWord.length;
 
@@ -206,6 +252,11 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       _secretWordX = newX;
       _secretWordY = newY;
       _nextRevealTime = DateTime.now().add(_delaysBetweenReveals);
+      _matchStartTime = DateTime.now();
+      // TODO: Add logic to only start doing this after a certain progression.
+      // Also, use better colors!
+      _backgroundColor =
+          _backgroundColors[_random.nextInt(_backgroundColors.length)];
     });
     _timer?.cancel();
     _timer = Timer.periodic(Duration(milliseconds: _rotationIntervalMillis),
@@ -238,23 +289,17 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     });
   }
 
-  _afterLayout(_) {
-//    _initBoard();
-  }
-
   _initBoard() {
     Future.delayed(const Duration(milliseconds: 500), () {
       final Size txtSize = _textSize("M", _monoFont);
       final glyphWidth = txtSize.width;
       final glyphHeight = txtSize.height;
 
-//      print("txtSize after layout is $glyphWidth x $glyphHeight");
-
-      _rowCount = (_getWindowHeight() ~/ glyphHeight);
+      _rowCount = _getWindowHeight() ~/ glyphHeight;
 
       _columnCount = _getWindowWidth() ~/ glyphWidth;
 
-//      print("Got $_rowCount rows and $_columnCount columns.");
+      _feedbackMessage = "What is the word?";
 
       _generateSecretWord();
     });
@@ -275,9 +320,9 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addObserver(this);
+    _loadSave();
 
-    WidgetsBinding.instance.addPostFrameCallback(_afterLayout);
+    WidgetsBinding.instance.addObserver(this);
 
     _focusNode.addListener(() {
       if (_rowCount == null) {
@@ -287,8 +332,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
         FocusScope.of(context).requestFocus(_focusNode);
       }
     });
-
-    _loadSave();
   }
 
   @override
@@ -299,19 +342,50 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state != AppLifecycleState.resumed) {
-      // TODO: Only if on a music-enabled stage.
+    if (state != AppLifecycleState.resumed || _muted) {
       activeMusic.pause();
+    } else {
+      _startPlayingMusic();
+    }
+  }
+
+  _startPlayingMusic() async {
+    if (activeMusic == null) {
+      final futureMusic = musicPlayer.play(musicAudioPath);
+      Future.wait([
+        () async {
+          activeMusic = await futureMusic;
+          _updateMusicState();
+        }()
+      ]);
     } else {
       activeMusic.resume();
     }
-    //setState(() { _notification = state; });
+  }
+
+  _updateMusicState() async {
+    if (_muted || _secretWord == null) {
+      activeMusic?.setVolume(0.0);
+    } else {
+      await activeMusic?.setVolume(1.0);
+      _startPlayingMusic();
+    }
   }
 
   _loadSave() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    debugPrint("Setting state");
+    final fastestSolveSeconds = prefs.getInt(PREFERENCE_STAT_FASTEST_SOLVE);
+    final fastestSolveDuration = fastestSolveSeconds == null
+        ? null
+        : Duration(seconds: fastestSolveSeconds);
     setState(() {
-      _victories = (prefs.getInt('victories') ?? 0);
+      _victories = (prefs.getInt(PREFERENCE_CURRENT_VICTORIES) ?? 0);
+      _muted = (prefs.getBool(PREFERENCE_MUTED) ?? false);
+      _statTotalSolves = (prefs.getInt(PREFERENCE_STAT_TOTAL_VICTORIES) ?? 0);
+      _statFastestSolve = fastestSolveDuration;
+      _statLongestStreak = (prefs.getInt(PREFERENCE_STAT_LONGEST_STREAK) ?? 0);
+      _statLongestWord = (prefs.getString(PREFERENCE_STAT_LONGEST_WORD));
     });
   }
 
@@ -325,23 +399,154 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     );
 
     void _toggleAudio() async {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setBool(PREFERENCE_MUTED, !_muted);
       setState(() {
-        muted = !muted;
+        _muted = !_muted;
       });
+    }
+
+    void _restart() async {
+      // Also starting message, etc.
+      setState(() {
+        _victories = 0;
+        _streak = 0;
+        _guess = Guess.none;
+        _feedbackMessage = "What is the word?";
+        _delaysBetweenReveals = Duration(seconds: 30);
+      });
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setInt(PREFERENCE_CURRENT_VICTORIES, 0);
+
+      _initBoard();
+    }
+
+    void _showCredits() {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text("Developed by Fifth Column"),
+                  Text("Audio by Kai Engel"),
+                ],
+              ),
+              actions: [
+                FlatButton(
+                  child: Text("Close"),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+            );
+          });
+    }
+
+    void _openInfo() async {
+      final statsList = <Widget>[
+        Text("Total Solves: $_statTotalSolves"),
+        Text("Longest Streak: $_statLongestStreak"),
+      ];
+      if (_statLongestWord != null) {
+        statsList.add(Text("Longest Word: $_statLongestWord"));
+      }
+      if (_statFastestSolve != null) {
+        statsList.add(Text(
+            "Fastest Solve: ${_statFastestSolve.toString().substring(2, 7)}"));
+      }
+
+      final actionsList = <Widget>[
+        FlatButton(
+          child: Text("Continue"),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        )
+      ];
+      if (_secretWord != null && _victories > 0) {
+        actionsList.insert(
+            0,
+            FlatButton(
+              child: Text("Restart"),
+              onPressed: () {
+                _restart();
+                Navigator.of(context).pop();
+              },
+            ));
+      }
+
+      actionsList.insert(
+          0,
+          FlatButton(
+            child: Text("Credits"),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _showCredits();
+            },
+          ));
+
+      // TODO: Use Cupertino dialog for iOS.
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: statsList,
+              ),
+              actions: actionsList,
+            );
+          });
     }
 
     void _handleSubmitted(String value) async {
       if (value.trim().toLowerCase() == _secretWord.toLowerCase()) {
-        if (!muted) {
+        if (!_muted) {
           sfxPlayer.play(dingAudioPath);
         }
 
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setInt("victories", _victories + 1);
+        prefs.setInt(PREFERENCE_CURRENT_VICTORIES, _victories + 1);
+        prefs.setInt(PREFERENCE_STAT_TOTAL_VICTORIES, _statTotalSolves + 1);
+        if (_streak + 1 > _statLongestStreak) {
+          prefs.setInt(PREFERENCE_STAT_LONGEST_STREAK, _streak + 1);
+        }
+
+        final solveTime = DateTime.now().difference(_matchStartTime);
+        if (_statFastestSolve == null ||
+            solveTime.compareTo(_statFastestSolve) < 0) {
+          prefs.setInt(PREFERENCE_STAT_FASTEST_SOLVE, solveTime.inSeconds);
+        }
+
+        if (_statLongestWord == null ||
+            value.length >= _statLongestWord.length) {
+          prefs.setString(PREFERENCE_STAT_LONGEST_WORD, value);
+        }
+
+        final messageIndex = _random.nextInt(_rightMessages.length);
 
         setState(() {
           _guess = Guess.correct;
+          _feedbackMessage = _rightMessages[messageIndex];
           _victories = _victories + 1;
+          _streak = _streak + 1;
+          if (_streak > _statLongestStreak) {
+            _statLongestStreak = _streak;
+          }
+          if (_statFastestSolve == null ||
+              solveTime.compareTo(_statFastestSolve) < 0) {
+            _statFastestSolve = solveTime;
+          }
+          if (_statLongestWord == null ||
+              value.length >= _statLongestWord.length) {
+            _statLongestWord = value;
+          }
+          _statTotalSolves = _statTotalSolves + 1;
           _delaysBetweenReveals = Duration(
               seconds: _delaysBetweenReveals.inSeconds +
                   _extraDelayPerMatch.inSeconds);
@@ -349,49 +554,24 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
 
         _generateSecretWord();
       } else {
-        if (!muted) {
+        if (!_muted) {
           sfxPlayer.play(wrongAudioPath);
         }
+        final messageIndex = _random.nextInt(_wrongMessages.length);
         setState(() {
           _guess = Guess.incorrect;
+          _feedbackMessage = _wrongMessages[messageIndex];
+          _streak = 0;
         });
       }
     }
 
-    final incorrectOpacity = AnimatedOpacity(
-      // If the widget is visible, animate to 0.0 (invisible).
-      // If the widget is hidden, animate to 1.0 (fully visible).
-      opacity: _guess == Guess.incorrect ? 1.0 : 0.0,
-      duration: _fadeDuration,
-      child: Center(
-          child: Text(
-        "That's not it...",
-        style: _feedbackStyle,
-      )),
-    );
-
-    final correctOpacity = AnimatedOpacity(
-      // If the widget is visible, animate to 0.0 (invisible).
-      // If the widget is hidden, animate to 1.0 (fully visible).
-      opacity: _guess == Guess.correct ? 1.0 : 0.0,
-      duration: _fadeDuration,
-      child: Center(
-          child: Text(
-        "That's right!",
-        style: _feedbackStyle,
-      )),
-    );
-
-    final noneOpacity = AnimatedOpacity(
-      // If the widget is visible, animate to 0.0 (invisible).
-      // If the widget is hidden, animate to 1.0 (fully visible).
-      opacity: _guess == Guess.none ? 1.0 : 0.0,
-      duration: _fadeDuration,
-      child: Center(
-          child: Text(
-        (_rowCount == null) ? "" : "What is the word?",
-        style: _feedbackStyle,
-      )),
+    final feedback = CrossFade<String>(
+      initialData: "",
+      data: _feedbackMessage,
+      builder: (value) => Center(
+        child: Text(value, style: _feedbackStyle),
+      ),
     );
 
     final solved = Align(
@@ -405,15 +585,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
             ))
         //)
         );
-
-    _launchSolved() async {
-      const url = 'https://www.lexencrypt.com/solved';
-      if (await canLaunch(url)) {
-        await launch(url);
-      } else {
-        throw 'Could not launch $url';
-      }
-    }
 
     _launchPrivacy() async {
       const url = 'https://www.lexencrypt.com/privacy';
@@ -438,15 +609,9 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
                   )),
             ),
           ),
-          /*
-        child: FlatButton(
-          onPressed: _launchURL,
-          child: Text("More..."),
-        )
-
-         */
         );
 
+    /*
     final buttons = Row(
       mainAxisAlignment: MainAxisAlignment.end,
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -454,46 +619,49 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
 //      children: <Widget>[privacy],
     );
 
+
     final buttonsContainer = Align(
         alignment: Alignment.centerRight,
         child: buttons,
     );
+     */
 
     final Widget mutedSvg = SvgPicture.asset("assets/music_off-white-24dp.svg");
-    final Widget unMutedSvg = SvgPicture.asset("assets/music_note-white-24dp.svg");
-    final audioImage = (muted) ? mutedSvg : unMutedSvg;
+    final Widget unMutedSvg =
+        SvgPicture.asset("assets/music_note-white-24dp.svg");
+    final audioImage = (_muted) ? mutedSvg : unMutedSvg;
+    final Widget infoSvg = SvgPicture.asset("assets/info-white-24dp.svg");
 
-    final muteButton = Align(
-      alignment: Alignment.centerRight,
-      child: AspectRatio(
-        aspectRatio: 1.0,
-          child: FlatButton(
-            onPressed: _toggleAudio,
-            padding: EdgeInsets.all(0.0),
-            child: audioImage,
-          )
+    final buttons = Align(
+        alignment: Alignment.centerRight,
+        child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+          AspectRatio(
+              aspectRatio: 1.0,
+              child: FlatButton(
+                onPressed: _openInfo,
+                padding: EdgeInsets.all(0.0),
+                child: infoSvg,
+              )),
+          AspectRatio(
+              aspectRatio: 1.0,
+              child: FlatButton(
+                onPressed: _toggleAudio,
+                padding: EdgeInsets.all(0.0),
+                child: audioImage,
+              )),
+        ]));
 
-      )
-    );
-
-    if (muted) {
-      activeMusic?.setVolume(0.0);
-    } else {
-      activeMusic?.setVolume(1.0);
-    }
+    _updateMusicState();
 
     final stack = Stack(
       alignment: Alignment.center,
       children: <Widget>[
-        incorrectOpacity,
-        correctOpacity,
-        noneOpacity,
-        buttonsContainer,
+        feedback,
       ],
     );
 
     if (_victories > 0) stack.children.add(solved);
-    stack.children.add(muteButton);
+    stack.children.add(buttons);
 
     final topContainer = Container(
       child: stack,
@@ -516,8 +684,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       },
       focusNode: _focusNode,
       keyboardType: TextInputType.text,
-//      autofocus: true,
-//      decoration: InputDecoration(),
     );
 
      */
@@ -552,6 +718,39 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       ],
     );
 
+    /*
+    final children = Stack(
+      children: [
+        CrossFade<Color>(
+            initialData: Colors.white,
+            data: _backgroundColor,
+            duration: Duration(seconds: 3),
+            builder: (value) =>
+                Container(decoration: BoxDecoration(color: value))),
+        Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[topContainer, _buildGrid(), _textField])
+      ],
+    );
+
+    CrossFade<Color>(
+        initialData: Colors.white,
+        data: _backgroundColor,
+        duration: Duration(seconds: 10),
+        builder: (value) => Container(
+            decoration: BoxDecoration(color: value),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                topContainer,
+                _buildGrid(),
+                _textField,
+//        _cupertinoTextField,
+              ],
+            )));
+
+     */
+
     return CupertinoPageScaffold(
       backgroundColor: Colors.white,
       navigationBar: CupertinoNavigationBar(
@@ -561,11 +760,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       ),
       child: children,
     );
-
-    /*
-     */
-
-    //_focusNode.requestFocus();
 
     /*
     return Scaffold(
@@ -713,19 +907,6 @@ class StyledBox extends StatefulWidget {
 /*
 Release checklist:
 
-Stretch:
-* More feedback messages (especially failure). Test fade.
-* Bundle RobotoMono font into app assets and remove Internet permission.
-
-Post-launch:
-* Save high score
-* Track time (per-board and/or total)
-* Background and foreground support w/timer
-* Button to restart
-* Music
-* Change background colors
-* Remove "More..." button
-
 Thoughts on game progression:
 Now that state can be saved, I'd like to extend the "discoveries" a bit more.
 
@@ -749,7 +930,7 @@ Possible progression:
 25: 3 tones of characters.
 30: Solid background fades.
 35: 4 tones of characters.
-40: Pulsating backgrounds.
+40: Pulsating backgrounds. (And/or add another music track?)
 45: 5 tones of characters.
 50: Multicolored fonts. (Hm, maybe tones should be alpha value instead of gray shades?)
 
@@ -759,17 +940,11 @@ This is probably good for a version 1.1. Future enhancements could include:
 * Off-centered letter positions.
 * Vertical words (stretch goal! and beware of limited height on some screens)
 * Diagonal words (as above).
-
-Thoughts on UI:
-* Mute (toggle on/off).
-* Restart with confirmation
-* Stats (maybe an icon near Mute? )
-  * Total solves
-  * Fastest solve
-  * Longest correct streak
-  *
+* Confirmation on Restart?
 
 Bugs:
 * As of 6/14/2020, autofocus does not work on profile or release builds. Working around this by requiring manual focus.
+* Music sometimes doesn't immediately stop when backgrounded or stopped. And/or duplicate music can play when re-launching.
+* There's some extra padding between the buttons and the content of the AlertDialog.
 
 */
