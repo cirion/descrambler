@@ -164,15 +164,30 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     final value = randomAlpha(2).substring(0, 1);
     if (_victories < 2) {
       return value.toLowerCase();
-    } else if (_victories < 4) {
+    } else if (_victories < 10) {
       return value.toUpperCase();
     }
     return value;
   }
 
   _generateColor() {
-    final index = min(_random.nextInt(_victories ~/ 2 + 1), _fonts.length - 1);
-    return _fonts[index];
+    int maxIndex = 1;
+    if (_victories > 45) {
+      maxIndex = 5;
+    } else if (_victories > 35) {
+      maxIndex = 4;
+    } else if (_victories > 25) {
+      maxIndex = 3;
+    } else if (_victories > 15) {
+      maxIndex = 2;
+    }
+    final index = _random.nextInt(maxIndex);
+    final grayOrBlue = _random.nextBool();
+    if (grayOrBlue || _victories < 50) {
+        return _fonts[index];
+      } else {
+        return _blueFonts[index];
+      }
   }
 
   _generateStartingColor() {
@@ -249,15 +264,17 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       }
     }
 
+    Color backgroundColor = Colors.white;
+    if (_victories > 30) {
+      backgroundColor = _backgroundColors[_random.nextInt(_backgroundColors.length)];
+    }
+
     setState(() {
       _secretWordX = _random.nextInt(_columnCount - secretWordLength);
       _secretWordY = _random.nextInt(_rowCount);
       _nextRevealTime = DateTime.now().add(_delaysBetweenReveals);
       _matchStartTime = DateTime.now();
-      // TODO: Add logic to only start doing this after a certain progression.
-      // Also, use better colors!
-      _backgroundColor =
-          _backgroundColors[_random.nextInt(_backgroundColors.length)];
+      _backgroundColor = backgroundColor;
     });
     _timer?.cancel();
     _timer = Timer.periodic(Duration(milliseconds: _rotationIntervalMillis),
@@ -765,6 +782,37 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     );
   }
 
+  static final _blue1Font = TextStyle(
+      fontFamily: 'RobotoMono',
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.blue);
+  static final _blue2Font = TextStyle(
+      fontFamily: 'RobotoMono',
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.blueAccent);
+  static final _blue3Font = TextStyle(
+      fontFamily: 'RobotoMono',
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.lightBlue);
+  static final _blue4Font = TextStyle(
+      fontFamily: 'RobotoMono',
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.lightBlueAccent);
+  static final _blue5Font = TextStyle(
+      fontFamily: 'RobotoMono',
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.blueGrey);
+  static final _blue6Font = TextStyle(
+      fontFamily: 'RobotoMono',
+      fontSize: 18.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      color: Colors.tealAccent);
+
   static final _gray2Font = TextStyle(
       fontFamily: 'RobotoMono',
       fontSize: 18.0,
@@ -798,6 +846,13 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     _gray3Font,
     _gray2Font,
     _gray1Font,
+  ];
+  static final _blueFonts = [
+    _blue1Font,
+    _blue2Font,
+    _blue3Font,
+    _blue4Font,
+    _blue5Font,
   ];
   final _hintFont = TextStyle(
       fontFamily: 'RobotoMono',
@@ -854,32 +909,22 @@ class StyledBox extends StatefulWidget {
 /*
 Release checklist:
 
-Thoughts on game progression:
-Now that state can be saved, I'd like to extend the "discoveries" a bit more.
-
-Items to vary could include:
-Initial fill characters
-Casing (lower, upper, mixed)
-Font colors (gray, much later do colors?)
-Backgrounds (maybe fade & stick per board for a while, then fade in-game?)
-Music
-
 Possible progression:
-1: *, lower case, black
-2: -, lower case, black
-3: -, upper case, black
-4: |, upper case, black
-5: /, upper case, black
-6-9: random chars to start, upper case, black
-10+: Mixed case
-15: 2 tones of characters.
-20: Music starts.
-25: 3 tones of characters.
-30: Solid background fades.
-35: 4 tones of characters.
-40: Pulsating backgrounds. (And/or add another music track?)
-45: 5 tones of characters.
-50: Multicolored fonts. (Hm, maybe tones should be alpha value instead of gray shades?)
+1: *, lower case, black ✔️
+2: -, lower case, black ✔️
+3: -, upper case, black ✔️
+4: |, upper case, black ✔️
+5: /, upper case, black ✔️
+6-9: random chars to start, upper case, black ✔️
+10+: Mixed case ✔️
+15: 2 tones of characters. ✔️
+20: Music starts. ✔️
+25: 3 tones of characters. ✔️
+30: Solid background fades. ✔️
+35: 4 tones of characters. ✔️
+40: Pulsating backgrounds. (And/or add another music track?) ✔️
+45: 5 tones of characters. ✔️
+50: Multicolored fonts. (Hm, maybe tones should be alpha value instead of gray shades?) ✔️
 
 This is probably good for a version 1.1. Future enhancements could include:
 * Pictures in background.
