@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitDown,
     ]);
     sfxPlayer.loadAll([dingAudioPath, wrongAudioPath]);
-    musicPlayer.loadAll([musicAudioPath]);
+    musicPlayer.loadAll(musicAudioPaths);
     //return CupertinoApp(title: 'Lexencrypt', home: RandomWords());
     return MaterialApp(
       title: 'Lexencrypt',
@@ -77,7 +77,12 @@ final dingAudioPath = "ding.mp3";
 final wrongAudioPath = "wrong.wav";
 
 AudioCache musicPlayer = new AudioCache();
-final musicAudioPath = "kai_engel_09_homeroad.mp3";
+final musicAudioPath1 = "kai_engel_09_homeroad.mp3";
+final musicAudioPath2 = "kai_engel_03_contention.mp3";
+final musicAudioPaths = [
+  musicAudioPath1,
+  musicAudioPath2,
+];
 AudioPlayer activeMusic;
 
 class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
@@ -338,19 +343,29 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state != AppLifecycleState.resumed || _muted) {
-      activeMusic.pause();
+    if (state != AppLifecycleState.resumed || _muted || !_shouldPlayMusic()) {
+      activeMusic?.pause();
     } else {
       _startPlayingMusic();
     }
   }
 
+  bool _shouldPlayMusic() {
+    return _victories >= 20;
+  }
+
   _startPlayingMusic() async {
     if (activeMusic == null) {
-      final futureMusic = musicPlayer.play(musicAudioPath);
+      int trackNumber = 0;
+      if (_victories >= 40) {
+        trackNumber = _random.nextInt(2);
+      }
+      final futureMusic = musicPlayer.play(musicAudioPaths[trackNumber],
+      );
       Future.wait([
         () async {
           activeMusic = await futureMusic;
+          activeMusic.setReleaseMode(ReleaseMode.LOOP);
           _updateMusicState();
         }()
       ]);
@@ -360,7 +375,7 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   }
 
   _updateMusicState() {
-    if (_muted) {
+    if (_muted || !_shouldPlayMusic()) {
       activeMusic?.setVolume(0.0);
     } else {
       activeMusic?.setVolume(1.0);
