@@ -109,10 +109,15 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   final Duration _extraDelayPerMatch = Duration(seconds: 30);
   DateTime _nextRevealTime;
 
+  static const int SONG_START_DELAY_MILLIS = 8000;
+
   int _statTotalSolves;
   int _statLongestStreak;
   Duration _statFastestSolve;
   String _statLongestWord;
+
+  int _musicStoppedPlayingMatch = 0;
+  bool _startingPlaying = false;
 
   static const String PREFERENCE_CURRENT_VICTORIES = "current_victories";
   static const String PREFERENCE_MUTED = "muted";
@@ -124,7 +129,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   bool _muted = false;
 
   Guess _guess = Guess.none;
-
   String _feedbackMessage = "";
 
   Color _backgroundColor = Colors.white;
@@ -172,22 +176,22 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
 
   _generateColor() {
     int maxIndex = 1;
-    if (_victories > 45) {
+    if (_victories >= 45) {
       maxIndex = 5;
-    } else if (_victories > 35) {
+    } else if (_victories >= 35) {
       maxIndex = 4;
-    } else if (_victories > 25) {
+    } else if (_victories >= 25) {
       maxIndex = 3;
-    } else if (_victories > 15) {
+    } else if (_victories >= 15) {
       maxIndex = 2;
     }
     final index = _random.nextInt(maxIndex);
     final grayOrBlue = _random.nextBool();
     if (grayOrBlue || _victories < 50) {
-        return _fonts[index];
-      } else {
-        return _blueFonts[index];
-      }
+      return _fonts[index];
+    } else {
+      return _blueFonts[index];
+    }
   }
 
   _generateStartingColor() {
@@ -266,7 +270,8 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
 
     Color backgroundColor = Colors.white;
     if (_victories > 30) {
-      backgroundColor = _backgroundColors[_random.nextInt(_backgroundColors.length)];
+      backgroundColor =
+          _backgroundColors[_random.nextInt(_backgroundColors.length)];
     }
 
     setState(() {
@@ -368,24 +373,31 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
   }
 
   bool _shouldPlayMusic() {
-    return _victories >= 20;
+    return _victories >= 20 && _victories >= _musicStoppedPlayingMatch + 2;
   }
 
   _startPlayingMusic() async {
     if (activeMusic == null) {
-      int trackNumber = 0;
-      if (_victories >= 40) {
-        trackNumber = _random.nextInt(2);
+      if (_startingPlaying) {
+        return;
       }
-      final futureMusic = musicPlayer.play(musicAudioPaths[trackNumber],
-      );
-      Future.wait([
-        () async {
-          activeMusic = await futureMusic;
-          activeMusic.setReleaseMode(ReleaseMode.LOOP);
-          _updateMusicState();
-        }()
-      ]);
+      _startingPlaying = true;
+      Future.delayed(const Duration(milliseconds: SONG_START_DELAY_MILLIS),
+          () async {
+        int trackNumber = 0;
+        if (_victories >= 40) {
+          trackNumber = _random.nextInt(2);
+        }
+        activeMusic = await musicPlayer.play(musicAudioPaths[trackNumber]);
+        _startingPlaying = false;
+        activeMusic.onPlayerCompletion.listen((event) {
+          setState(() {
+            activeMusic = null;
+            _musicStoppedPlayingMatch = _victories;
+          });
+        });
+        _updateMusicState();
+      });
     } else {
       activeMusic.resume();
     }
@@ -435,9 +447,9 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
     }
 
     void _restart() async {
-      // Also starting message, etc.
       setState(() {
         _victories = 0;
+        _musicStoppedPlayingMatch = 0;
         _streak = 0;
         _guess = Guess.none;
         _feedbackMessage = "What is the word?";
