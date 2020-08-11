@@ -851,7 +851,6 @@ class RandomWordsState extends State<RandomWords> with WidgetsBindingObserver {
       fontFeatures: [FontFeature.tabularFigures()],
       color: Colors.black87);
   static final _fonts = [
-    _monoFont,
     _gray6Font,
     _gray5Font,
     _gray4Font,
