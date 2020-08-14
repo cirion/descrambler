@@ -918,9 +918,11 @@ class StyledBox extends StatefulWidget {
 }
 
 /*
-Release checklist:
+Possible improvements:
+* Set a maximum delay for hints. I think that currently it takes FOREVER to get
+  red letters after the first 3 boards or so.
 
-Possible progression:
+Current progression:
 1: *, lower case, black ✔️
 2: -, lower case, black ✔️
 3: -, upper case, black ✔️
